@@ -47,9 +47,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .pt{font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px}
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .stit{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px}
-.stit i{color:var(--grn)}
 .lnk{font-size:12px;color:var(--blu);cursor:pointer;background:none;border:none;font-family:inherit}
-.lnk:hover{opacity:.8}
 .tbtn{padding:4px 9px;font-size:11px;border-radius:5px;cursor:pointer;background:transparent;border:1px solid transparent;color:var(--tx3);font-family:inherit;transition:all .12s}
 .tbtn:hover{color:var(--tx2)}
 .tbtn.a{background:var(--bg4);border-color:var(--br2);color:var(--tx)}
@@ -69,9 +67,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .mic.g{background:var(--grnb);color:var(--grn)}.mic.r{background:var(--redb);color:var(--red)}.mic.a{background:var(--gldb);color:var(--gld)}.mic.b{background:var(--blub);color:var(--blu)}
 .mg2{display:grid;grid-template-columns:1fr 340px;gap:14px;margin-bottom:16px}
 .tkr{background:var(--bg3);border:1px solid var(--br);border-radius:9px;padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;overflow:hidden}
-.tkrs{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.tkrs{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none}
 .tkrs::-webkit-scrollbar{display:none}
-.tki{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tki{display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.tki:hover .tki-sym{color:var(--grn)}
 .chgp{font-size:11px;padding:2px 5px;border-radius:4px;font-weight:500}
 .chgp.u{background:var(--grnb);color:var(--grn)}.chgp.d{background:var(--redb);color:var(--red)}
 table{width:100%;border-collapse:collapse}
@@ -96,6 +95,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .page{display:none}.page.on{display:block}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 .dot{width:6px;height:6px;border-radius:50%;animation:pulse 2s infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite;display:inline-block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -109,11 +110,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .ml-dot{width:18px;height:2px;border-radius:1px;display:inline-block;margin-right:3px;vertical-align:middle}
 .info-box{border-radius:8px;padding:10px 12px;margin-bottom:8px}
 .info-box:last-child{margin-bottom:0}
+/* Data source badge */
 .data-badge{position:fixed;bottom:14px;right:14px;background:var(--bg3);border:1px solid var(--br2);border-radius:20px;padding:6px 12px;font-size:10px;color:var(--tx3);z-index:50;display:flex;align-items:center;gap:6px}
+/* Loading skeleton */
+.skel{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:skel 1.5s infinite;border-radius:6px;height:18px;width:80%}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* Live indicator */
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);display:inline-block;animation:pulse 2s infinite}
 </style>
 </head>
 <body>
 <div class="app">
+  <!-- SIDEBAR -->
   <aside class="sb">
     <div class="logo">
       <div class="logo-ic">IDX</div>
@@ -124,12 +132,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <div class="nav-lbl">Core</div>
         <div class="ni act" data-page="dash"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
         <div class="ni" data-page="broker"><i class="ti ti-building-bank"></i> Broker Summary</div>
-        <div class="ni" data-page="bandar"><i class="ti ti-eye"></i> Tracking Bandar <span class="nbdg g">7</span></div>
+        <div class="ni" data-page="bandar"><i class="ti ti-eye"></i> Tracking Bandar <span class="nbdg g" id="bandarBadge">7</span></div>
         <div class="ni" data-page="foreign"><i class="ti ti-world"></i> Foreign Flow</div>
       </div>
       <div class="nav-sec">
         <div class="nav-lbl">Strategi</div>
-        <div class="ni" data-page="ma"><i class="ti ti-chart-line"></i> MA Strategy</div>
+        <div class="ni" data-page="ma"><i class="ti ti-chart-line"></i> MA Strategy <span class="nbdg g" id="maBadge"></span></div>
         <div class="ni" data-page="screener"><i class="ti ti-filter"></i> AI Screener <span class="nbdg p">AI</span></div>
         <div class="ni" data-page="swing"><i class="ti ti-arrows-exchange"></i> Swing Setup</div>
       </div>
@@ -149,6 +157,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </aside>
 
+  <!-- MAIN -->
   <main class="main">
     <div class="topbar">
       <div>
@@ -158,543 +167,793 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div style="display:flex;align-items:center;gap:10px">
         <div id="clock" style="font-family:monospace;font-size:13px;color:var(--tx2);background:var(--bg3);padding:5px 11px;border-radius:7px;border:1px solid var(--br)">--:--:--</div>
         <div id="mktStatus" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;background:var(--grnb);border:1px solid rgba(0,214,143,.2);color:var(--grn)">
-          <span class="dot" id="mktDot" style="background:var(--grn)"></span><span id="mktLbl">Pasar Buka</span>
+          <span class="dot" id="mktDot" style="background:var(--grn)"></span><span id="mktLbl">Cek status...</span>
         </div>
-        <button class="btn" onclick="refreshData()"><i class="ti ti-refresh"></i> Refresh</button>
+        <button class="btn" onclick="refreshAllData()"><i class="ti ti-refresh" id="refreshIcon"></i> Refresh</button>
         <button class="btn pri" onclick="showPage('alerts')"><i class="ti ti-bell"></i> Alerts</button>
       </div>
     </div>
 
     <div class="cnt">
-
+      <!-- DASHBOARD -->
       <div id="p-dash" class="page on">
         <div class="tkr">
-          <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);white-space:nowrap;padding-right:10px;border-right:1px solid var(--br);display:flex;align-items:center;gap:5px"><span class="dot" style="background:var(--grn)"></span>LIVE</div>
-          <div class="tkrs" id="tickerScroll"></div>
+          <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);white-space:nowrap;padding-right:10px;border-right:1px solid var(--br);display:flex;align-items:center;gap:5px">
+            <span class="live-dot"></span>LIVE
+          </div>
+          <div class="tkrs" id="tickerScroll"><div style="color:var(--tx3);font-size:11px">Memuat data...</div></div>
         </div>
+
         <div class="mg4">
-          <div class="mc cg"><div class="mic g"><i class="ti ti-trending-up"></i></div><div class="ml">IHSG Index</div><div class="mv" style="color:var(--grn)">7,284</div><div style="font-size:11px;color:var(--grn)">▲ +0.87% hari ini</div></div>
-          <div class="mc cr"><div class="mic r"><i class="ti ti-world"></i></div><div class="ml">Net Foreign</div><div class="mv" style="color:var(--red)">-247 M</div><div style="font-size:11px;color:var(--red)">▼ Net Sell asing</div></div>
-          <div class="mc ca"><div class="mic a"><i class="ti ti-activity"></i></div><div class="ml">Volume Total</div><div class="mv" style="color:var(--gld)">18.4 T</div><div style="font-size:11px;color:var(--grn)">▲ +12.3% vs kemarin</div></div>
-          <div class="mc cb"><div class="mic b"><i class="ti ti-chart-candle"></i></div><div class="ml">Saham Aktif</div><div class="mv">482</div><div style="font-size:11px"><span style="color:var(--grn)">289↑</span> / <span style="color:var(--red)">156↓</span></div></div>
+          <div class="mc cg"><div class="mic g"><i class="ti ti-trending-up"></i></div><div class="ml">IHSG Index</div><div class="mv" style="color:var(--grn)" id="m-ihsg">—</div><div style="font-size:11px;color:var(--grn)" id="m-ihsg-chg">Memuat...</div></div>
+          <div class="mc cr"><div class="mic r"><i class="ti ti-world"></i></div><div class="ml">Net Foreign</div><div class="mv" style="color:var(--red)" id="m-foreign">—</div><div style="font-size:11px;color:var(--tx3)">Data hari ini</div></div>
+          <div class="mc ca"><div class="mic a"><i class="ti ti-activity"></i></div><div class="ml">Last Update</div><div class="mv" style="color:var(--gld);font-size:14px" id="m-lastupdate">—</div><div style="font-size:11px;color:var(--tx3)">Data dari Yahoo Finance</div></div>
+          <div class="mc cb"><div class="mic b"><i class="ti ti-chart-candle"></i></div><div class="ml">MA Signals</div><div class="mv" id="m-signals">—</div><div style="font-size:11px" id="m-signals-sub">Buy + Sell hari ini</div></div>
         </div>
+
         <div class="mg2">
+          <!-- Chart -->
           <div class="panel">
             <div class="ph">
-              <div class="pt"><i class="ti ti-chart-candle" style="color:var(--grn)"></i> Chart Analisis · BBCA</div>
-              <div style="display:flex;gap:4px" id="tfBtns">
-                <button class="tbtn" onclick="setTF(this)">1D</button>
-                <button class="tbtn a" onclick="setTF(this)">1W</button>
-                <button class="tbtn" onclick="setTF(this)">1M</button>
-                <button class="tbtn" onclick="setTF(this)">3M</button>
+              <div class="pt"><i class="ti ti-chart-candle" style="color:var(--grn)"></i> Chart Harga · <span id="chartStock">BBCA</span></div>
+              <div style="display:flex;gap:4px">
+                <button class="tbtn a" onclick="setTF(this,'1D')">1D</button>
+                <button class="tbtn" onclick="setTF(this,'5D')">5D</button>
+                <button class="tbtn" onclick="setTF(this,'1M')">1M</button>
+                <button class="tbtn" onclick="setTF(this,'3M')">3M</button>
               </div>
             </div>
             <div style="padding:14px 16px">
               <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
-                <span style="font-weight:700;font-size:18px">BBCA</span>
-                <span style="font-family:monospace;font-size:20px;font-weight:500">9,650</span>
-                <span class="bdg buy" style="font-size:12px;padding:3px 9px">+1.05%</span>
-                <span style="font-size:11px;color:var(--tx3);margin-left:auto">H: 9,680 &nbsp; L: 9,580 &nbsp; Vol: 124.5M</span>
+                <span style="font-weight:700;font-size:18px" id="chartSymbol">BBCA</span>
+                <span style="font-family:monospace;font-size:20px;font-weight:500" id="chartPrice">—</span>
+                <span class="bdg buy" style="font-size:12px" id="chartChg">—</span>
+                <span style="font-size:11px;color:var(--tx3);margin-left:auto" id="chartHLV">—</span>
               </div>
               <div style="position:relative;height:190px"><canvas id="priceChart"></canvas></div>
-              <div class="ma-legend">
-                <span><span class="ml-dot" style="background:var(--gld)"></span>MA10: 9,540</span>
-                <span><span class="ml-dot" style="background:var(--blu)"></span>MA20: 9,320</span>
-                <span><span class="ml-dot" style="background:var(--pur)"></span>MA50: 9,180</span>
-                <span style="margin-left:auto;color:var(--grn);font-weight:600">● Golden Cross Active</span>
+              <div class="ma-legend" id="maLegend">
+                <span><span class="ml-dot" style="background:var(--gld)"></span>MA10: <span id="leg-ma10">—</span></span>
+                <span><span class="ml-dot" style="background:var(--blu)"></span>MA20: <span id="leg-ma20">—</span></span>
+                <span><span class="ml-dot" style="background:var(--pur)"></span>MA50: <span id="leg-ma50">—</span></span>
+                <span id="leg-signal" style="margin-left:auto;font-weight:600"></span>
               </div>
             </div>
           </div>
+
+          <!-- Bandar -->
           <div class="panel">
             <div class="ph">
-              <div class="pt"><i class="ti ti-eye" style="color:var(--grn)"></i> Tracking Bandar</div>
+              <div class="pt"><i class="ti ti-eye" style="color:var(--grn)"></i> MA Signals Hari Ini</div>
               <div style="display:flex;gap:3px">
-                <button class="tbtn a" id="btAcc" onclick="switchBandar('acc',this)">Akumulasi</button>
-                <button class="tbtn" id="btDist" onclick="switchBandar('dist',this)">Distribusi</button>
+                <button class="tbtn a" id="btBuy" onclick="switchMAView('buy',this)">Buy</button>
+                <button class="tbtn" id="btSell" onclick="switchMAView('sell',this)">Sell</button>
+                <button class="tbtn" id="btWatch" onclick="switchMAView('watch',this)">Watch</button>
               </div>
             </div>
-            <div id="bandarList" style="padding:4px 14px"></div>
-          </div>
-        </div>
-        <div class="sh"><div class="stit"><i class="ti ti-world"></i> Foreign Flow Ringkasan</div><button class="lnk" onclick="showPage('foreign')">Lihat Detail →</button></div>
-        <div class="fcg">
-          <div class="fc">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px">Net Foreign</span><span class="bdg sell">Net Sell</span></div>
-            <div style="font-weight:700;font-size:20px;color:var(--red)">-Rp 247 M</div>
-            <div style="font-size:11px;color:var(--tx3);margin:4px 0 10px">Hari ini · IDX Regular</div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <div class="donut-wrap"><svg width="48" height="48" viewBox="0 0 48 48" style="transform:rotate(-90deg)"><circle cx="24" cy="24" r="17" fill="none" stroke="var(--bg4)" stroke-width="7"/><circle cx="24" cy="24" r="17" fill="none" stroke="var(--red)" stroke-width="7" stroke-dasharray="64 43" stroke-linecap="round"/></svg><div class="donut-lbl" style="color:var(--red)">60%</div></div>
-              <div style="font-size:11px"><div style="color:var(--tx2);margin-bottom:3px">● Jual: 60%</div><div style="color:var(--tx2)">● Beli: 40%</div></div>
+            <div id="maSignalList" style="padding:4px 14px">
+              <div style="padding:20px;text-align:center;color:var(--tx3)">Memuat sinyal...</div>
             </div>
           </div>
-          <div class="fc">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px">Foreign Buy</span><span class="bdg buy">Strong</span></div>
-            <div style="font-weight:700;font-size:20px;color:var(--grn)">+Rp 1.89 T</div>
-            <div style="font-size:11px;color:var(--tx3);margin-bottom:8px;margin-top:2px">Total beli asing hari ini</div>
-            <div id="fbuyList"></div>
-          </div>
-          <div class="fc">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px">Foreign Sell</span><span class="bdg sell">Pressure</span></div>
-            <div style="font-weight:700;font-size:20px;color:var(--red)">-Rp 2.14 T</div>
-            <div style="font-size:11px;color:var(--tx3);margin-bottom:8px;margin-top:2px">Total jual asing hari ini</div>
-            <div id="fsellList"></div>
-          </div>
         </div>
+
+        <!-- Live Prices Table -->
+        <div class="sh"><div class="stit"><i class="ti ti-table"></i> Harga Saham Live</div><span style="font-size:11px;color:var(--tx3)" id="priceUpdateTime">Delay ~15 menit</span></div>
+        <div class="panel" style="margin-bottom:16px;overflow-x:auto">
+          <table>
+            <thead><tr><th>Kode</th><th>Nama</th><th>Harga</th><th>Open</th><th>High</th><th>Low</th><th>Volume</th><th>Update</th></tr></thead>
+            <tbody id="livePriceTable"><tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:20px">Memuat data harga...</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- MA Signals summary -->
         <div class="sh"><div class="stit"><i class="ti ti-chart-line"></i> MA Strategy Signals</div><button class="lnk" onclick="showPage('ma')">Semua Sinyal →</button></div>
         <div class="g2" style="margin-bottom:16px">
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-arrow-up-circle"></i> Sinyal Buy</div><span class="bdg buy">5 saham</span></div><div id="buySignalList" style="padding:2px 14px"></div></div>
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-arrow-down-circle"></i> Sinyal Sell</div><span class="bdg sell">3 saham</span></div><div id="sellSignalList" style="padding:2px 14px"></div></div>
+          <div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-arrow-up-circle"></i> Golden Cross · Buy</div><span class="bdg buy" id="buyCount">— saham</span></div><div id="buySignalList" style="padding:2px 14px"><div style="padding:16px;text-align:center;color:var(--tx3)">Memuat...</div></div></div>
+          <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-arrow-down-circle"></i> Death Cross · Sell</div><span class="bdg sell" id="sellCount">— saham</span></div><div id="sellSignalList" style="padding:2px 14px"><div style="padding:16px;text-align:center;color:var(--tx3)">Memuat...</div></div></div>
         </div>
-        <div class="sh"><div class="stit"><i class="ti ti-bell"></i> Alerts Terbaru</div><button class="lnk" onclick="showPage('alerts')">Semua →</button></div>
-        <div class="panel" id="dashAlerts"></div>
       </div>
 
+      <!-- BROKER PAGE -->
       <div id="p-broker" class="page">
-        <div class="sh">
-          <div class="stit"><i class="ti ti-building-bank"></i> Broker Summary</div>
-          <div style="display:flex;gap:6px" id="brokerStockTabs"></div>
+        <div class="sh"><div class="stit"><i class="ti ti-building-bank"></i> Broker Summary</div><span class="bdg" style="background:var(--gldb);color:var(--gld)">Mode Demo</span></div>
+        <div style="background:var(--gldb);border:1px solid rgba(255,184,0,.2);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--gld)">
+          ℹ️ Data Broker Summary membutuhkan sumber data berbayar dari IDX. Fitur ini menampilkan data contoh. Upgrade ke data provider seperti RTI Business untuk data real.
         </div>
-        <div class="panel" style="overflow-x:auto;margin-bottom:14px"><table><thead><tr><th>Kode</th><th>Nama Broker</th><th>Vol Beli</th><th>Vol Jual</th><th>Net Volume</th><th>Avg Buy</th><th>Avg Sell</th><th>Status</th></tr></thead><tbody id="brokerTbody"></tbody></table></div>
+        <div class="panel" style="overflow-x:auto;margin-bottom:14px">
+          <table><thead><tr><th>Kode</th><th>Nama Broker</th><th>Vol Beli</th><th>Vol Jual</th><th>Net Volume</th><th>Avg Buy</th><th>Avg Sell</th><th>Status</th></tr></thead>
+          <tbody id="brokerTbody"></tbody></table>
+        </div>
         <div class="g2">
           <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-chart-bar"></i> Top Akumulasi</div></div><div style="padding:12px 14px"><div style="position:relative;height:180px"><canvas id="brokerChart"></canvas></div></div></div>
-          <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-info-circle" style="color:var(--blu)"></i> Interpretasi AI</div></div>
+          <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-info-circle" style="color:var(--blu)"></i> Interpretasi</div></div>
             <div style="padding:14px">
-              <div class="info-box" style="background:var(--grnb);border:1px solid rgba(0,214,143,.2)"><div style="color:var(--grn);font-weight:600;font-size:12px;margin-bottom:4px">✓ Dominasi Beli Smart Money</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">Broker YU & AK menunjukkan akumulasi konsisten. Net buy tinggi mengindikasikan smart money sedang positioning sebelum breakout.</div></div>
-              <div class="info-box" style="background:var(--redb);border:1px solid rgba(255,77,106,.2)"><div style="color:var(--red);font-weight:600;font-size:12px;margin-bottom:4px">⚠ Distribusi Broker Asing</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">Broker DH & ZP (foreign-linked) aktif distribusi di resistance. Waspadai tekanan jual pada level 9,680.</div></div>
+              <div class="info-box" style="background:var(--grnb);border:1px solid rgba(0,214,143,.2)"><div style="color:var(--grn);font-weight:600;font-size:12px;margin-bottom:4px">✓ Dominasi Beli Smart Money</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">Broker YU & AK menunjukkan akumulasi konsisten. Net buy tinggi mengindikasikan smart money sedang positioning.</div></div>
+              <div class="info-box" style="background:var(--redb);border:1px solid rgba(255,77,106,.2)"><div style="color:var(--red);font-weight:600;font-size:12px;margin-bottom:4px">⚠ Distribusi Broker Asing</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">Broker DH & ZP aktif distribusi. Waspadai tekanan jual pada level resistance.</div></div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- BANDAR PAGE -->
       <div id="p-bandar" class="page">
+        <div class="sh"><div class="stit"><i class="ti ti-eye"></i> Tracking Bandar</div><span class="bdg" style="background:var(--gldb);color:var(--gld)">Mode Demo</span></div>
+        <div style="background:var(--gldb);border:1px solid rgba(255,184,0,.2);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--gld)">
+          ℹ️ Data Bandar/Smart Money tracking membutuhkan data broker IDX berbayar. Menampilkan data contoh — upgrade untuk data real.
+        </div>
         <div class="mg4">
           <div class="mc cg"><div class="mic g"><i class="ti ti-trending-up"></i></div><div class="ml">Akumulasi</div><div class="mv" style="color:var(--grn)">12</div><div style="font-size:11px;color:var(--grn)">↑ 3 baru hari ini</div></div>
           <div class="mc cr"><div class="mic r"><i class="ti ti-trending-down"></i></div><div class="ml">Distribusi</div><div class="mv" style="color:var(--red)">7</div><div style="font-size:11px;color:var(--red)">↑ 2 baru hari ini</div></div>
           <div class="mc ca"><div class="mic a"><i class="ti ti-coin"></i></div><div class="ml">Net Buy Total</div><div class="mv" style="color:var(--gld)">+8.9B</div><div style="font-size:11px;color:var(--grn)">Smart money masuk</div></div>
           <div class="mc cb"><div class="mic b"><i class="ti ti-clock"></i></div><div class="ml">Avg Durasi</div><div class="mv">4.2</div><div style="font-size:11px;color:var(--tx3)">hari per pola</div></div>
         </div>
-        <div class="g2" style="margin-bottom:14px">
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-trending-up"></i> Top Akumulasi</div><span class="bdg buy">Live</span></div><div id="bandarAccPage" style="padding:4px 14px"></div></div>
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-trending-down"></i> Top Distribusi</div><span class="bdg sell">Live</span></div><div id="bandarDistPage" style="padding:4px 14px"></div></div>
-        </div>
-        <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-chart-area-line"></i> Kumulatif Net Buy/Sell — 7 Hari</div></div><div style="padding:14px"><div style="position:relative;height:180px"><canvas id="bandarChart"></canvas></div></div></div>
+        <div class="g2"><div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-trending-up"></i> Top Akumulasi</div></div><div id="bandarAccPage" style="padding:4px 14px"></div></div>
+        <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-trending-down"></i> Top Distribusi</div></div><div id="bandarDistPage" style="padding:4px 14px"></div></div></div>
       </div>
 
+      <!-- FOREIGN PAGE -->
       <div id="p-foreign" class="page">
+        <div class="sh"><div class="stit"><i class="ti ti-world"></i> Foreign Flow</div><span class="bdg" style="background:var(--gldb);color:var(--gld)">Mode Demo</span></div>
+        <div style="background:var(--gldb);border:1px solid rgba(255,184,0,.2);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--gld)">
+          ℹ️ Data Foreign Flow membutuhkan data resmi IDX berbayar. Menampilkan data contoh.
+        </div>
         <div class="mg4">
-          <div class="mc cr"><div class="mic r"><i class="ti ti-world"></i></div><div class="ml">Net Foreign</div><div class="mv" style="color:var(--red)">-247 M</div><div style="font-size:11px;color:var(--red)">Net Sell hari ini</div></div>
-          <div class="mc cg"><div class="mic g"><i class="ti ti-arrow-up"></i></div><div class="ml">Foreign Buy</div><div class="mv" style="color:var(--grn)">1.89 T</div><div style="font-size:11px;color:var(--grn)">Total hari ini</div></div>
-          <div class="mc cr"><div class="mic r"><i class="ti ti-arrow-down"></i></div><div class="ml">Foreign Sell</div><div class="mv" style="color:var(--red)">2.14 T</div><div style="font-size:11px;color:var(--red)">Total hari ini</div></div>
-          <div class="mc ca"><div class="mic a"><i class="ti ti-calendar"></i></div><div class="ml">Net YTD 2026</div><div class="mv" style="color:var(--red)">-12.4 T</div><div style="font-size:11px;color:var(--red)">Year-to-date</div></div>
+          <div class="mc cr"><div class="mic r"><i class="ti ti-world"></i></div><div class="ml">Net Foreign</div><div class="mv" style="color:var(--red)">-247 M</div><div style="font-size:11px;color:var(--red)">Demo data</div></div>
+          <div class="mc cg"><div class="mic g"><i class="ti ti-arrow-up"></i></div><div class="ml">Foreign Buy</div><div class="mv" style="color:var(--grn)">1.89 T</div><div style="font-size:11px;color:var(--grn)">Demo data</div></div>
+          <div class="mc cr"><div class="mic r"><i class="ti ti-arrow-down"></i></div><div class="ml">Foreign Sell</div><div class="mv" style="color:var(--red)">2.14 T</div><div style="font-size:11px;color:var(--red)">Demo data</div></div>
+          <div class="mc ca"><div class="mic a"><i class="ti ti-calendar"></i></div><div class="ml">Net YTD 2026</div><div class="mv" style="color:var(--red)">-12.4 T</div><div style="font-size:11px;color:var(--red)">Demo data</div></div>
         </div>
-        <div class="g2" style="margin-bottom:14px">
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-arrow-up-circle"></i> Top Foreign Buy</div></div><div id="fBuyTable" style="overflow-x:auto"></div></div>
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-arrow-down-circle"></i> Top Foreign Sell</div></div><div id="fSellTable" style="overflow-x:auto"></div></div>
-        </div>
-        <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-chart-area"></i> Net Foreign Flow — 10 Hari Terakhir</div></div><div style="padding:14px"><div style="position:relative;height:200px"><canvas id="foreignChart"></canvas></div></div></div>
       </div>
 
+      <!-- MA PAGE -->
       <div id="p-ma" class="page">
+        <div class="sh"><div class="stit"><i class="ti ti-chart-line"></i> MA Strategy Signals</div><span class="bdg buy" style="font-size:11px">Data Real ✓</span></div>
         <div class="mg4">
-          <div class="mc cg"><div class="mic g"><i class="ti ti-arrow-up-circle"></i></div><div class="ml">Golden Cross</div><div class="mv" style="color:var(--grn)">5</div><div style="font-size:11px;color:var(--grn)">Saham hari ini</div></div>
-          <div class="mc cr"><div class="mic r"><i class="ti ti-arrow-down-circle"></i></div><div class="ml">Death Cross</div><div class="mv" style="color:var(--red)">3</div><div style="font-size:11px;color:var(--red)">Saham hari ini</div></div>
-          <div class="mc ca"><div class="mic a"><i class="ti ti-eye"></i></div><div class="ml">Watch Zone</div><div class="mv" style="color:var(--gld)">8</div><div style="font-size:11px;color:var(--gld)">Mendekati cross</div></div>
-          <div class="mc cb"><div class="mic b"><i class="ti ti-percentage"></i></div><div class="ml">Win Rate MA</div><div class="mv" style="color:var(--blu)">71%</div><div style="font-size:11px;color:var(--tx3)">Backtest 30 hari</div></div>
+          <div class="mc cg"><div class="mic g"><i class="ti ti-arrow-up-circle"></i></div><div class="ml">Golden Cross</div><div class="mv" style="color:var(--grn)" id="ma-buy-count">—</div><div style="font-size:11px;color:var(--grn)">Saham hari ini</div></div>
+          <div class="mc cr"><div class="mic r"><i class="ti ti-arrow-down-circle"></i></div><div class="ml">Death Cross</div><div class="mv" style="color:var(--red)" id="ma-sell-count">—</div><div style="font-size:11px;color:var(--red)">Saham hari ini</div></div>
+          <div class="mc ca"><div class="mic a"><i class="ti ti-eye"></i></div><div class="ml">Watch Zone</div><div class="mv" style="color:var(--gld)" id="ma-watch-count">—</div><div style="font-size:11px;color:var(--gld)">Mendekati cross</div></div>
+          <div class="mc cb"><div class="mic b"><i class="ti ti-clock"></i></div><div class="ml">Diupdate</div><div class="mv" style="font-size:14px" id="ma-updated">—</div><div style="font-size:11px;color:var(--tx3)">Otomatis tiap 15 menit</div></div>
         </div>
         <div class="g2" style="margin-bottom:14px">
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-arrow-up-circle"></i> Golden Cross · Buy Signal</div></div><div id="maBuyList" style="padding:2px 14px"></div></div>
-          <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-arrow-down-circle"></i> Death Cross · Sell Signal</div></div><div id="maSellList" style="padding:2px 14px"></div></div>
+          <div class="panel"><div class="ph"><div class="pt" style="color:var(--grn)"><i class="ti ti-arrow-up-circle"></i> Golden Cross · Buy Signal</div></div><div id="maBuyFull" style="padding:2px 14px"></div></div>
+          <div class="panel"><div class="ph"><div class="pt" style="color:var(--red)"><i class="ti ti-arrow-down-circle"></i> Death Cross · Sell Signal</div></div><div id="maSellFull" style="padding:2px 14px"></div></div>
         </div>
-        <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-help-circle" style="color:var(--gld)"></i> Cara Baca Sinyal MA Strategy</div></div>
+        <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-help-circle" style="color:var(--gld)"></i> Cara Baca Sinyal</div></div>
           <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
             <div class="info-box" style="background:var(--grnb);border:1px solid rgba(0,214,143,.2)"><div style="color:var(--grn);font-weight:600;font-size:12px;margin-bottom:5px">Golden Cross ↑</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">MA10 memotong MA20 dari bawah ke atas. Sinyal bullish kuat — potensi kenaikan berlanjut.</div></div>
             <div class="info-box" style="background:var(--redb);border:1px solid rgba(255,77,106,.2)"><div style="color:var(--red);font-weight:600;font-size:12px;margin-bottom:5px">Death Cross ↓</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">MA10 memotong MA20 dari atas ke bawah. Sinyal bearish — potensi penurunan lebih dalam.</div></div>
-            <div class="info-box" style="background:var(--gldb);border:1px solid rgba(255,184,0,.2)"><div style="color:var(--gld);font-weight:600;font-size:12px;margin-bottom:5px">Watch Zone ◎</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">MA10 mendekati MA20 (jarak &lt;1%). Cross bisa terjadi 1-3 hari ke depan. Siapkan entry.</div></div>
+            <div class="info-box" style="background:var(--gldb);border:1px solid rgba(255,184,0,.2)"><div style="color:var(--gld);font-weight:600;font-size:12px;margin-bottom:5px">Watch Zone ◎</div><div style="font-size:11px;color:var(--tx2);line-height:1.6">MA10 mendekati MA20 (jarak &lt;1%). Cross bisa terjadi 1-3 hari ke depan.</div></div>
           </div>
         </div>
       </div>
 
+      <!-- SCREENER PAGE -->
       <div id="p-screener" class="page">
-        <div class="sh"><div class="stit"><i class="ti ti-robot"></i> AI Stock Screener</div><span class="bdg ai" style="font-size:11px;padding:3px 10px">Powered by AI</span></div>
+        <div class="sh"><div class="stit"><i class="ti ti-robot"></i> AI Stock Screener</div><span class="bdg buy" style="font-size:11px">Data Real ✓</span></div>
         <div class="panel">
           <div style="padding:12px 14px 0">
-            <div class="fltr" id="screenerFilters">
-              <div class="fp a" data-f="all">Semua Sinyal</div>
-              <div class="fp" data-f="buy"><i class="ti ti-trending-up"></i> Bullish Setup</div>
-              <div class="fp" data-f="vol"><i class="ti ti-chart-bar"></i> High Volume</div>
-              <div class="fp" data-f="bandar"><i class="ti ti-eye"></i> Bandar</div>
-              <div class="fp" data-f="foreign"><i class="ti ti-world"></i> Foreign Buy</div>
-              <div class="fp" data-f="ma"><i class="ti ti-chart-line"></i> MA Cross</div>
+            <div class="fltr">
+              <div class="fp a" data-f="all" onclick="filterScreener(this)">Semua</div>
+              <div class="fp" data-f="buy" onclick="filterScreener(this)"><i class="ti ti-trending-up"></i> Bullish</div>
+              <div class="fp" data-f="sell" onclick="filterScreener(this)"><i class="ti ti-trending-down"></i> Bearish</div>
+              <div class="fp" data-f="watch" onclick="filterScreener(this)"><i class="ti ti-eye"></i> Watch</div>
             </div>
           </div>
-          <div style="overflow-x:auto"><table><thead><tr><th>Kode</th><th>Harga</th><th>Change</th><th>Volume</th><th>AI Score</th><th>Setup</th><th>Sinyal</th><th>Aksi</th></tr></thead><tbody id="screenerBody"></tbody></table></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Kode</th><th>Harga</th><th>Change</th><th>Volume</th><th>MA10</th><th>MA20</th><th>Sinyal</th><th>Aksi</th></tr></thead><tbody id="screenerBody"><tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:20px">Memuat data...</td></tr></tbody></table></div>
         </div>
       </div>
 
+      <!-- SWING PAGE -->
       <div id="p-swing" class="page">
-        <div class="sh"><div class="stit"><i class="ti ti-arrows-exchange"></i> Swing Trading Setup</div><span class="bdg ai">Phase 2 Beta</span></div>
+        <div class="sh"><div class="stit"><i class="ti ti-arrows-exchange"></i> Swing Trading Setup</div><span class="bdg ai">Beta</span></div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
-          <div class="mc cg"><div class="ml">Setup Aktif</div><div class="mv" style="color:var(--grn)">9</div><div style="font-size:11px;color:var(--tx3)">Siap entry</div></div>
-          <div class="mc ca"><div class="ml">Avg R:R Ratio</div><div class="mv" style="color:var(--gld)">1:3.2</div><div style="font-size:11px;color:var(--tx3)">Risk-Reward</div></div>
-          <div class="mc cb"><div class="ml">Win Rate 30D</div><div class="mv" style="color:var(--blu)">68%</div><div style="font-size:11px;color:var(--tx3)">Backtest</div></div>
+          <div class="mc cg"><div class="ml">Setup Aktif</div><div class="mv" style="color:var(--grn)" id="swingCount">—</div><div style="font-size:11px;color:var(--tx3)">Dari data MA real</div></div>
+          <div class="mc ca"><div class="ml">Avg R:R Ratio</div><div class="mv" style="color:var(--gld)">1:2.5</div><div style="font-size:11px;color:var(--tx3)">Estimasi</div></div>
+          <div class="mc cb"><div class="ml">Data Source</div><div class="mv" style="font-size:13px;color:var(--blu)">Yahoo</div><div style="font-size:11px;color:var(--tx3)">Finance API</div></div>
         </div>
         <div id="swingCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"></div>
       </div>
 
+      <!-- ALERTS PAGE -->
       <div id="p-alerts" class="page">
-        <div class="sh">
-          <div class="stit"><i class="ti ti-bell"></i> Notifikasi & Alerts</div>
+        <div class="sh"><div class="stit"><i class="ti ti-bell"></i> Notifikasi & Alerts</div>
           <div style="display:flex;gap:8px;align-items:center"><span class="bdg sell" id="alertBadge">3 Baru</span><button class="lnk" onclick="markAllAlerts()">Tandai Semua Baca</button></div>
         </div>
         <div class="panel" id="alertList"></div>
       </div>
 
+      <!-- WATCHLIST PAGE -->
       <div id="p-watchlist" class="page">
-        <div class="sh"><div class="stit"><i class="ti ti-star"></i> Watchlist Saya</div><button class="btn"><i class="ti ti-plus"></i> Tambah via Screener</button></div>
+        <div class="sh"><div class="stit"><i class="ti ti-star"></i> Watchlist Saya</div></div>
         <div class="panel"><div id="wlBody" style="padding:4px 14px"></div></div>
       </div>
 
+      <!-- SETTINGS PAGE -->
       <div id="p-settings" class="page">
         <div class="g2" style="margin-bottom:14px">
           <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-brand-telegram"></i> Notifikasi Telegram</div></div><div style="padding:4px 14px" id="telegramSettings"></div></div>
-          <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-adjustments"></i> Preferensi Trading</div></div><div style="padding:4px 14px" id="tradingSettings"></div></div>
+          <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-adjustments"></i> Preferensi</div></div><div style="padding:4px 14px" id="tradingSettings"></div></div>
         </div>
-        <div class="panel"><div class="ph"><div class="pt"><i class="ti ti-package" style="color:var(--gld)"></i> Paket Berlangganan</div></div><div style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="planCards"></div></div>
+        <div class="panel"><div class="ph"><div class="pt" style="color:var(--gld)"><i class="ti ti-package"></i> Paket Berlangganan</div></div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <div style="border:1px solid var(--br);border-radius:11px;padding:16px"><div style="font-weight:700;font-size:15px;margin-bottom:4px">Basic</div><div style="font-family:monospace;font-size:18px;font-weight:600;margin-bottom:12px">Gratis</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ Dashboard & Chart</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ MA Signals real</div><div style="font-size:12px;color:var(--tx2)">✓ 5 Watchlist</div></div>
+            <div style="border:1px solid var(--grn);border-radius:11px;padding:16px;background:var(--grnb)"><div style="font-weight:700;font-size:15px;margin-bottom:4px;color:var(--grn)">Premium</div><div style="font-family:monospace;font-size:18px;font-weight:600;margin-bottom:12px">Rp 99K/bln</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ Semua Basic</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ Telegram alerts</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ Broker Summary</div><div style="font-size:12px;color:var(--tx2)">✓ Unlimited watchlist</div><div style="margin-top:12px;font-size:12px;color:var(--grn);font-weight:600">✦ Paket Aktif</div></div>
+            <div style="border:1px solid var(--br);border-radius:11px;padding:16px"><div style="font-weight:700;font-size:15px;margin-bottom:4px">Pro</div><div style="font-family:monospace;font-size:18px;font-weight:600;margin-bottom:12px">Rp 199K/bln</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ Semua Premium</div><div style="font-size:12px;color:var(--tx2);margin-bottom:5px">✓ API access</div><div style="font-size:12px;color:var(--tx2)">✓ Foreign Flow real</div></div>
+          </div>
+        </div>
       </div>
-
     </div>
   </main>
 </div>
 
-<div class="data-badge"><span class="dot" style="background:var(--gld);width:5px;height:5px"></span><span id="dataSourceLabel">Mode Demo — Data Contoh</span></div>
+<div class="data-badge" id="dataBadge">
+  <span class="dot" style="background:var(--gld);width:5px;height:5px"></span>
+  <span id="dataSourceLabel">Menghubungkan ke database...</span>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-function safeNewChart(ctx, config){
-  try{
-    if (typeof Chart === 'undefined'){ console.warn('[IDX] Chart.js belum termuat'); return null; }
-    return new Chart(ctx, config);
-  }catch(err){ console.warn('[IDX] Gagal membuat chart:', err); return null; }
+// ══════════════════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════════════════
+var SUPABASE_URL = 'https://jzyifvltdngpfkectvoh.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_W2E8DeDBMhL3GVWdfXmkrw_HBl-K8wM4c';
+
+var STOCK_NAMES = {
+  'BBCA':'Bank Central Asia','BBRI':'Bank Rakyat Indonesia','BMRI':'Bank Mandiri',
+  'BBNI':'Bank Negara Indonesia','BRIS':'Bank Syariah Indonesia','TLKM':'Telkom Indonesia',
+  'ASII':'Astra International','GOTO':'GoTo Gojek Tokopedia','PGAS':'Perusahaan Gas Negara',
+  'INDF':'Indofood Sukses Makmur','ICBP':'Indofood CBP','UNVR':'Unilever Indonesia',
+  'KLBF':'Kalbe Farma','SIDO':'Sido Muncul','ADRO':'Adaro Energy',
+  'PTBA':'Bukit Asam','ANTM':'Aneka Tambang','MDKA':'Merdeka Copper Gold',
+  'SMGR':'Semen Indonesia','WIKA':'Wijaya Karya'
+};
+
+// ══════════════════════════════════════════
+// SUPABASE FETCH HELPER
+// ══════════════════════════════════════════
+async function sbFetch(table, params) {
+  params = params || '';
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/' + table + params, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch(e) {
+    console.warn('[IDX] Supabase error:', e);
+    return null;
+  }
 }
 
-const TICKERS=[
-  {s:'IHSG',p:'7,284',c:'+0.87%',u:true},{s:'BBCA',p:'9,650',c:'+1.05%',u:true},
-  {s:'BBRI',p:'4,820',c:'-0.41%',u:false},{s:'TLKM',p:'3,940',c:'+0.25%',u:true},
-  {s:'ASII',p:'5,275',c:'-0.57%',u:false},{s:'GOTO',p:'72',c:'+2.86%',u:true},
-  {s:'BMRI',p:'6,875',c:'+0.73%',u:true},{s:'PGAS',p:'1,765',c:'-1.12%',u:false},
-  {s:'INDF',p:'6,150',c:'+0.49%',u:true},{s:'UNVR',p:'2,190',c:'-0.23%',u:false},
-  {s:'BRIS',p:'1,490',c:'+1.36%',u:true},{s:'ICBP',p:'10,850',c:'+0.46%',u:true},
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+var allMASignals = [];
+var allPrices = [];
+var watchlist = ['BBCA','GOTO','BMRI'];
+var activeAlerts = [
+  {id:0,type:'buy',icon:'ti-trending-up',title:'Robot data berjalan!',desc:'GitHub Actions berhasil mengambil data saham dari Yahoo Finance dan menyimpan ke database.',time:'Auto',read:false},
+  {id:1,type:'info',icon:'ti-database',title:'Database Supabase terhubung',desc:'Aplikasi berhasil terhubung ke Supabase. Data akan diperbarui otomatis setiap 15 menit saat jam bursa.',time:'Auto',read:false},
+  {id:2,type:'warn',icon:'ti-brand-telegram',title:'Setup Telegram Bot (Opsional)',desc:'Hubungkan Telegram Bot untuk mendapat notifikasi Golden Cross/Death Cross langsung di HP.',time:'Pending',read:true},
 ];
-const BANDAR_ACC=[
-  {rank:1,code:'BBCA',sec:'Perbankan',pct:87,net:'+5.2B',days:'3 hari'},
-  {rank:2,code:'GOTO',sec:'Teknologi',pct:79,net:'+3.8B',days:'5 hari'},
-  {rank:3,code:'TLKM',sec:'Telekomunikasi',pct:71,net:'+2.1B',days:'2 hari'},
-  {rank:4,code:'BMRI',sec:'Perbankan',pct:68,net:'+1.8B',days:'4 hari'},
-  {rank:5,code:'BRIS',sec:'Syariah',pct:62,net:'+1.2B',days:'3 hari'},
-];
-const BANDAR_DIST=[
-  {rank:1,code:'PGAS',sec:'Energi',pct:65,net:'-1.7B',days:'4 hari'},
-  {rank:2,code:'ASII',sec:'Otomotif',pct:58,net:'-2.3B',days:'3 hari'},
-  {rank:3,code:'UNVR',sec:'Konsumer',pct:52,net:'-0.9B',days:'2 hari'},
-  {rank:4,code:'BBRI',sec:'Perbankan',pct:48,net:'-0.6B',days:'1 hari'},
-];
-const BUY_SIG=[
-  {code:'BBCA',detail:'MA10 cross MA20 ↑',signal:'Golden Cross',price:'9,650',chg:'+1.05%',t:'buy'},
-  {code:'GOTO',detail:'MA10 cross MA20 ↑',signal:'Golden Cross',price:'72',chg:'+2.86%',t:'buy'},
-  {code:'INDF',detail:'Bounce MA20',signal:'Watch',price:'6,150',chg:'+0.49%',t:'watch'},
-];
-const SELL_SIG=[
-  {code:'PGAS',detail:'MA10 cross MA20 ↓',signal:'Death Cross',price:'1,765',chg:'-1.12%',t:'sell'},
-  {code:'ASII',detail:'Break MA50',signal:'Death Cross',price:'5,275',chg:'-0.57%',t:'sell'},
-  {code:'UNVR',detail:'Reject MA10',signal:'Watch',price:'2,190',chg:'-0.23%',t:'watch'},
-];
-const BROKER_STOCKS=['BBCA','BMRI','TLKM','GOTO'];
-const BROKER_DATA={
-  BBCA:[{code:'YU',name:'BNI Sekuritas',buy:24.5,sell:9.2,ab:9620,as:9580,st:'acc'},{code:'AK',name:'UBS Securities',buy:19.8,sell:6.1,ab:9640,as:9610,st:'acc'},{code:'RX',name:'Mandiri Sekuritas',buy:15.2,sell:13.8,ab:9635,as:9630,st:'neu'},{code:'DH',name:'BCA Sekuritas',buy:6.4,sell:21.3,ab:9655,as:9645,st:'dist'},{code:'ZP',name:'Kim Eng',buy:5.5,sell:18.2,ab:9645,as:9662,st:'dist'}],
-  BMRI:[{code:'RX',name:'Mandiri Sekuritas',buy:32.1,sell:8.5,ab:6850,as:6840,st:'acc'},{code:'YU',name:'BNI Sekuritas',buy:18.7,sell:5.2,ab:6860,as:6855,st:'acc'},{code:'AK',name:'UBS Securities',buy:12.4,sell:11.8,ab:6875,as:6870,st:'neu'},{code:'ZP',name:'Kim Eng',buy:4.1,sell:15.9,ab:6880,as:6890,st:'dist'}],
-  TLKM:[{code:'YU',name:'BNI Sekuritas',buy:8.2,sell:18.9,ab:3930,as:3945,st:'dist'},{code:'AK',name:'UBS Securities',buy:5.1,sell:22.4,ab:3920,as:3940,st:'dist'},{code:'RX',name:'Mandiri Sekuritas',buy:14.7,sell:6.3,ab:3935,as:3928,st:'acc'},{code:'DH',name:'BCA Sekuritas',buy:10.5,sell:8.9,ab:3938,as:3932,st:'neu'}],
-  GOTO:[{code:'AK',name:'UBS Securities',buy:180,sell:42,ab:70,as:69,st:'acc'},{code:'YU',name:'BNI Sekuritas',buy:152,sell:38,ab:71,as:70,st:'acc'},{code:'ZP',name:'Kim Eng',buy:88,sell:45,ab:72,as:71,st:'acc'},{code:'DH',name:'BCA Sekuritas',buy:34,sell:120,ab:73,as:74,st:'dist'}],
-};
-const SCREENER_DATA=[
-  {code:'BBCA',price:'9,650',chg:'+1.05%',u:true,vol:'124.5M',score:92,setup:'Akumulasi',signal:'Strong Buy',t:'buy'},
-  {code:'GOTO',price:'72',chg:'+2.86%',u:true,vol:'2.8B',score:88,setup:'Breakout',signal:'Strong Buy',t:'buy'},
-  {code:'BMRI',price:'6,875',chg:'+0.73%',u:true,vol:'87.2M',score:75,setup:'Rebound',signal:'Buy',t:'watch'},
-  {code:'BRIS',price:'1,490',chg:'+1.36%',u:true,vol:'64.3M',score:70,setup:'Golden Cross',signal:'Buy',t:'buy'},
-  {code:'INDF',price:'6,150',chg:'+0.49%',u:true,vol:'43.1M',score:62,setup:'Bounce MA',signal:'Neutral',t:'watch'},
-  {code:'UNVR',price:'2,190',chg:'-0.23%',u:false,vol:'31.2M',score:38,setup:'Sideways',signal:'Hold',t:'watch'},
-  {code:'PGAS',price:'1,765',chg:'-1.12%',u:false,vol:'198.3M',score:22,setup:'Distribusi',signal:'Strong Sell',t:'sell'},
-  {code:'ASII',price:'5,275',chg:'-0.57%',u:false,vol:'74.5M',score:18,setup:'Death Cross',signal:'Sell',t:'sell'},
-];
-const ALERTS_DATA=[
-  {type:'buy',icon:'ti-trending-up',title:'BBCA — Golden Cross Terdeteksi!',desc:'MA10 berhasil cross MA20 ke atas. Volume 124.5M (+87% rata-rata). Setup bullish sangat kuat.',time:'09:32',read:false},
-  {type:'warn',icon:'ti-eye',title:'Bandar Alert: GOTO — Akumulasi Intensif',desc:'Broker YU, AK, ZP akumulasi 5 hari berturut-turut. Net buy kumulatif +3.8B. Waspadai breakout resistance 75.',time:'10:15',read:false},
-  {type:'sell',icon:'ti-world',title:'Foreign Flow: Net Sell TLKM -421M',desc:'Investor asing agresif jual TLKM. Death cross MA10/MA20 berpotensi terbentuk 1-2 hari ke depan.',time:'11:04',read:false},
-  {type:'info',icon:'ti-robot',title:'AI Screener: 5 saham masuk bullish list',desc:'BBCA, GOTO, BMRI, INDF, BRIS teridentifikasi AI memiliki setup bullish konfirmasi hari ini.',time:'11:30',read:true},
-  {type:'info',icon:'ti-chart-bar',title:'IHSG rebound dari support MA50',desc:'Indeks bounce dari support kritis MA50 di 7.210. Momentum bullish short-term terkonfirmasi.',time:'12:45',read:true},
-];
-const SWING_DATA=[
-  {code:'BBCA',entry:'9,580–9,620',tp:'10,200',sl:'9,350',rr:'2.8',days:'5–10H',t:'buy',score:88},
-  {code:'GOTO',entry:'68–71',tp:'88',sl:'62',rr:'3.5',days:'7–14H',t:'buy',score:85},
-  {code:'BMRI',entry:'6,800–6,850',tp:'7,400',sl:'6,600',rr:'2.5',days:'5–8H',t:'buy',score:78},
-  {code:'BRIS',entry:'1,460–1,480',tp:'1,650',sl:'1,400',rr:'2.8',days:'7–12H',t:'buy',score:72},
-  {code:'PGAS',entry:'1,800–1,820',tp:'1,680',sl:'1,870',rr:'2.0',days:'3–7H',t:'sell',score:65},
-  {code:'ASII',entry:'5,350–5,380',tp:'5,050',sl:'5,500',rr:'2.2',days:'5–10H',t:'sell',score:60},
-];
-var watchlist=['BBCA','GOTO','BMRI'];
-var activeAlerts=ALERTS_DATA.map(function(a,i){ a.id=i; return a; });
-var activeBrokerStock='BBCA';
-var settingState={};
+var settingState = {tg_gc:true,tg_bandar:true,tg_ma:false,tg_ff:true,tg_ai:false,tr_dark:true,tr_refresh:true,tr_sound:false,tr_vol:true};
+var priceChart = null;
+var brokerChartInst = null;
+var currentMAView = 'buy';
+var currentTF = '1D';
 
-const $=function(id){ return document.getElementById(id); };
-const signalRow=function(s){
-  const col=s.t==='buy'?'grn':s.t==='sell'?'red':'gld';
-  return '<div class="sli"><div style="flex:1"><div style="font-family:monospace;font-size:13px;font-weight:600">'+s.code+'</div><div style="font-size:10px;color:var(--tx3)">'+s.detail+'</div></div><span class="bdg '+s.t+'">'+s.signal+'</span><div style="text-align:right;min-width:52px"><div style="font-family:monospace;font-size:12px;font-weight:500">'+s.price+'</div><div style="font-size:11px;color:var(--'+col+')">'+s.chg+'</div></div></div>';
-};
-const bandarRow=function(b,col){
-  return '<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--br)"><div style="font-family:monospace;font-size:11px;color:var(--tx3);width:14px">'+b.rank+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+b.code+'</div><div style="font-size:10px;color:var(--tx3)">'+b.sec+'</div></div><div style="flex:1.4"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:10px;color:var(--tx3)">'+(col==='grn'?'Akumulasi':'Distribusi')+'</span><span style="font-size:10px;color:var(--'+col+')">'+b.pct+'%</span></div><div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+b.pct+'%;height:100%;background:var(--'+col+');border-radius:2px"></div></div></div><div style="text-align:right;min-width:52px"><div style="font-family:monospace;font-size:12px;font-weight:500;color:var(--'+col+')">'+b.net+'</div><div style="font-size:10px;color:var(--tx3)">'+b.days+'</div></div></div>';
-};
-
+// ══════════════════════════════════════════
+// CLOCK & DATE
+// ══════════════════════════════════════════
+var DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+var MONTHS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 function tickClock(){
   try{
-    const n=new Date();
-    const pad=function(v){ return String(v).padStart(2,'0'); };
-    $('clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
-    const DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-    const MONTHS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    $('topDate').textContent=DAYS[n.getDay()]+', '+n.getDate()+' '+MONTHS[n.getMonth()]+' '+n.getFullYear()+' · IDX Composite';
-    const open=n.getHours()>=9&&n.getHours()<16&&n.getDay()>=1&&n.getDay()<=5;
-    const ms=$('mktStatus');
+    var n=new Date();
+    var pad=function(v){return String(v).padStart(2,'0');};
+    document.getElementById('clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+    document.getElementById('topDate').textContent=DAYS[n.getDay()]+', '+n.getDate()+' '+MONTHS[n.getMonth()]+' '+n.getFullYear()+' · IDX Smart Money';
+    var open=n.getHours()>=9&&n.getHours()<16&&n.getDay()>=1&&n.getDay()<=5;
+    var ms=document.getElementById('mktStatus');
     ms.style.background=open?'var(--grnb)':'var(--redb)';
     ms.style.border='1px solid '+(open?'rgba(0,214,143,.2)':'rgba(255,77,106,.2)');
     ms.style.color=open?'var(--grn)':'var(--red)';
-    $('mktDot').style.background=open?'var(--grn)':'var(--red)';
-    $('mktLbl').textContent=open?'Pasar Buka':'Pasar Tutup';
+    document.getElementById('mktDot').style.background=open?'var(--grn)':'var(--red)';
+    document.getElementById('mktLbl').textContent=open?'Pasar Buka':'Pasar Tutup';
   }catch(e){}
 }
 setInterval(tickClock,1000); tickClock();
 
-try{
-  $('tickerScroll').innerHTML=TICKERS.map(function(t){
-    return '<div class="tki"><span style="font-family:monospace;font-size:13px;font-weight:600">'+t.s+'</span><span style="font-family:monospace;font-size:11px;color:var(--tx2)">'+t.p+'</span><span class="chgp '+(t.u?'u':'d')+'">'+t.c+'</span></div>';
-  }).join('');
-}catch(e){}
-
-const PAGE_TITLES={dash:'Market Overview',broker:'Broker Summary',bandar:'Tracking Bandar',foreign:'Foreign Flow Analytics',ma:'MA Strategy Signals',screener:'AI Stock Screener',swing:'Swing Trading Setup',alerts:'Notifikasi & Alerts',watchlist:'Watchlist Saya',settings:'Pengaturan'};
+// ══════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════
+var PAGE_TITLES={dash:'Market Overview',broker:'Broker Summary',bandar:'Tracking Bandar',foreign:'Foreign Flow',ma:'MA Strategy Signals',screener:'AI Stock Screener',swing:'Swing Trading Setup',alerts:'Notifikasi & Alerts',watchlist:'Watchlist Saya',settings:'Pengaturan'};
 function showPage(id){
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
-  document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('act'); });
-  const pg=$('p-'+id); if(pg)pg.classList.add('on');
-  const ni=document.querySelector('.ni[data-page="'+id+'"]'); if(ni)ni.classList.add('act');
-  $('topTitle').textContent=PAGE_TITLES[id]||'Dashboard';
-  const builders={broker:buildBrokerPage,bandar:buildBandarPage,foreign:buildForeignPage,ma:buildMAPage,screener:buildScreenerPage,swing:buildSwingPage,alerts:buildAlertsPage,watchlist:buildWLPage,settings:buildSettingsPage};
-  if(builders[id]) try{ builders[id](); }catch(e){ console.warn(e); }
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('act');});
+  var pg=document.getElementById('p-'+id); if(pg)pg.classList.add('on');
+  var ni=document.querySelector('.ni[data-page="'+id+'"]'); if(ni)ni.classList.add('act');
+  document.getElementById('topTitle').textContent=PAGE_TITLES[id]||'Dashboard';
+  if(id==='broker')buildBrokerPage();
+  if(id==='bandar')buildBandarPage();
+  if(id==='ma')buildMAFull();
+  if(id==='screener')buildScreenerFromMA();
+  if(id==='swing')buildSwingFromMA();
+  if(id==='alerts')buildAlertsPage();
+  if(id==='watchlist')buildWLPage();
+  if(id==='settings')buildSettingsPage();
 }
 document.querySelectorAll('.ni[data-page]').forEach(function(n){
-  n.addEventListener('click', function(){ showPage(n.dataset.page); });
+  n.addEventListener('click',function(){showPage(n.dataset.page);});
 });
 
-function refreshData(){
-  const ic=document.querySelector('.btn i.ti-refresh');
-  if(ic){ ic.style.transform='rotate(360deg)'; ic.style.transition='transform .5s'; setTimeout(function(){ ic.style.transform=''; },600); }
+// ══════════════════════════════════════════
+// MAIN DATA LOAD
+// ══════════════════════════════════════════
+async function loadAllData(){
+  document.getElementById('dataSourceLabel').textContent='Memuat data dari Supabase...';
+  await Promise.all([loadPrices(), loadMASignals()]);
+  document.getElementById('dataSourceLabel').textContent='✓ Data Real · Update tiap 15 menit';
+  document.getElementById('dataBadge').querySelector('.dot').style.background='var(--grn)';
 }
 
-try{
-  $('bandarList').innerHTML=BANDAR_ACC.map(function(b){ return bandarRow(b,'grn'); }).join('');
-  $('buySignalList').innerHTML=BUY_SIG.map(signalRow).join('');
-  $('sellSignalList').innerHTML=SELL_SIG.map(signalRow).join('');
-  $('fbuyList').innerHTML=[['BBCA','+485M'],['BMRI','+312M'],['GOTO','+198M']].map(function(p){ return '<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px"><span style="color:var(--tx3)">'+p[0]+'</span><span style="color:var(--grn);font-family:monospace;font-weight:500">'+p[1]+'</span></div>'; }).join('');
-  $('fsellList').innerHTML=[['TLKM','-421M'],['ASII','-387M'],['PGAS','-265M']].map(function(p){ return '<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px"><span style="color:var(--tx3)">'+p[0]+'</span><span style="color:var(--red);font-family:monospace;font-weight:500">'+p[1]+'</span></div>'; }).join('');
-}catch(e){ console.warn(e); }
+async function loadPrices(){
+  // Ambil harga terbaru per saham
+  var data = await sbFetch('stock_prices',
+    '?select=stock_code,close,open,high,low,volume,time' +
+    '&order=time.desc&limit=200'
+  );
 
-function switchBandar(mode,btn){
-  document.querySelectorAll('#btAcc,#btDist').forEach(function(b){ b.classList.remove('a'); });
-  btn.classList.add('a');
-  const data=mode==='acc'?BANDAR_ACC:BANDAR_DIST;
-  const col=mode==='acc'?'grn':'red';
-  $('bandarList').innerHTML=data.map(function(b){ return bandarRow(b,col); }).join('');
+  if(!data || !data.length){
+    document.getElementById('livePriceTable').innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:20px">Belum ada data harga. Robot akan mengambil data saat jam bursa buka (09:00-16:00 WIB).</td></tr>';
+    // Fallback ke demo
+    renderTickerDemo();
+    return;
+  }
+
+  // Dedupe: ambil 1 data terbaru per saham
+  var seen = {};
+  var latest = [];
+  data.forEach(function(r){
+    if(!seen[r.stock_code]){seen[r.stock_code]=true;latest.push(r);}
+  });
+  allPrices = latest;
+
+  renderTicker(latest);
+  renderLivePriceTable(latest);
+  updateMetrics(latest);
+
+  // Load chart untuk BBCA
+  loadChartData('BBCA');
 }
 
-function renderDashAlerts(){
-  try{
-    $('dashAlerts').innerHTML=activeAlerts.slice(0,4).map(function(a){
-      const icMap={buy:['ti-trending-up','var(--grnb)','var(--grn)'],sell:['ti-world','var(--redb)','var(--red)'],warn:['ti-eye','var(--gldb)','var(--gld)'],info:['ti-robot','var(--blub)','var(--blu)']};
-      const m=icMap[a.type]||icMap.info;
-      return '<div class="ali" style="opacity:'+(a.read?.75:1)+'"><div class="aic" style="background:'+m[1]+';color:'+m[2]+'"><i class="ti '+m[0]+'"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:'+(a.read?400:600)+';margin-bottom:2px">'+a.title+'</div><div style="font-size:11px;color:var(--tx3);line-height:1.5">'+a.desc+'</div></div><div style="font-size:10px;color:var(--tx3);font-family:monospace;white-space:nowrap">'+a.time+'</div></div>';
-    }).join('');
-  }catch(e){}
-}
-renderDashAlerts();
+async function loadMASignals(){
+  var today = new Date().toISOString().split('T')[0];
+  var data = await sbFetch('ma_signals',
+    '?detected_at=eq.'+today+
+    '&select=stock_code,signal_type,ma_signal,price,ma10,ma20,ma50,detected_at' +
+    '&order=stock_code.asc'
+  );
 
-function setTF(btn){ document.querySelectorAll('#tfBtns .tbtn').forEach(function(b){ b.classList.remove('a'); }); btn.classList.add('a'); }
+  if(!data || !data.length){
+    // Coba ambil sinyal terbaru meski bukan hari ini
+    data = await sbFetch('ma_signals',
+      '?select=stock_code,signal_type,ma_signal,price,ma10,ma20,ma50,detected_at' +
+      '&order=detected_at.desc&limit=40'
+    );
+  }
 
-safeNewChart($('priceChart') ? $('priceChart').getContext('2d') : null,{
-  type:'bar',
-  data:{
-    labels:['Sen','Sel','Rab','Kam','Jum','Sen','Sel'],
-    datasets:[
-      {label:'Candle',data:[70,40,80,50,80,80,80],backgroundColor:['rgba(0,214,143,.65)','rgba(255,77,106,.65)','rgba(0,214,143,.65)','rgba(0,214,143,.65)','rgba(0,214,143,.65)','rgba(0,214,143,.65)','rgba(0,214,143,.55)'],borderColor:['#00D68F','#FF4D6A','#00D68F','#00D68F','#00D68F','#00D68F','#00D68F'],borderWidth:1,borderRadius:2,base:[9350,9420,9380,9430,9460,9500,9570]},
-      {type:'line',data:[9450,9460,9470,9490,9500,9520,9540],borderColor:'#FFB800',borderWidth:1.5,pointRadius:0,tension:.4,label:'MA10'},
-      {type:'line',data:[9200,9240,9270,9290,9300,9310,9320],borderColor:'#4D9EFF',borderWidth:1.5,pointRadius:0,tension:.4,label:'MA20'},
-      {type:'line',data:[9100,9130,9150,9160,9170,9175,9180],borderColor:'#9B5DE5',borderWidth:1,pointRadius:0,tension:.4,borderDash:[3,2],label:'MA50'},
-    ]
-  },
-  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#161B29',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#8A91A8',bodyColor:'#E8EBF4'}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10},callback:function(v){return 'Rp '+v.toLocaleString('id-ID');}},min:9100,max:9750}}}
-});
+  if(!data || !data.length){
+    document.getElementById('buySignalList').innerHTML='<div style="padding:16px;text-align:center;color:var(--tx3)">Belum ada sinyal. Robot berjalan saat jam bursa.</div>';
+    document.getElementById('sellSignalList').innerHTML='<div style="padding:16px;text-align:center;color:var(--tx3)">Belum ada sinyal.</div>';
+    return;
+  }
 
-var brokerChartInst=null;
-function buildBrokerPage(){
-  $('brokerStockTabs').innerHTML=BROKER_STOCKS.map(function(s){ return '<button class="tbtn'+(s===activeBrokerStock?' a':'')+'" onclick="selectBrokerStock(\''+s+'\',this)">'+s+'</button>'; }).join('');
-  renderBrokerTable(activeBrokerStock);
-  renderBrokerChart(activeBrokerStock);
-}
-function selectBrokerStock(s,btn){
-  activeBrokerStock=s;
-  document.querySelectorAll('#brokerStockTabs .tbtn').forEach(function(b){ b.classList.remove('a'); });
-  btn.classList.add('a');
-  renderBrokerTable(s); renderBrokerChart(s);
-}
-function renderBrokerTable(s){
-  const data=BROKER_DATA[s]||[];
-  const maxV=Math.max.apply(null, data.map(function(d){ return Math.max(d.buy,d.sell); }));
-  $('brokerTbody').innerHTML=data.map(function(b){
-    const net=b.buy-b.sell;
-    const nc=net>2?'grn':net<-2?'red':'gld';
-    const stLbl=b.st==='acc'?'Akumulasi':b.st==='dist'?'Distribusi':'Netral';
-    const stT=b.st==='acc'?'buy':b.st==='dist'?'sell':'neu';
-    const bw=function(v){ return Math.round((v/maxV)*58); };
-    return '<tr><td><span style="font-family:monospace;font-weight:600;color:var(--blu);font-size:12px">'+b.code+'</span></td><td style="color:var(--tx2)">'+b.name+'</td><td><div class="bar-w"><div class="bar-t"><div style="width:'+bw(b.buy)+'%;height:100%;background:var(--grn);opacity:.75"></div></div><span style="font-family:monospace;font-size:11px;color:var(--grn)">'+b.buy+'M</span></div></td><td><div class="bar-w"><div class="bar-t"><div style="width:'+bw(b.sell)+'%;height:100%;background:var(--red);opacity:.75"></div></div><span style="font-family:monospace;font-size:11px;color:var(--red)">'+b.sell+'M</span></div></td><td><span style="font-family:monospace;font-size:12px;font-weight:500;color:var(--'+nc+')">'+(net>0?'+':'')+net.toFixed(1)+'M</span></td><td style="font-family:monospace;font-size:11px;color:var(--tx2)">'+b.ab.toLocaleString()+'</td><td style="font-family:monospace;font-size:11px;color:var(--tx2)">'+b.as.toLocaleString()+'</td><td><span class="bdg '+stT+'">'+stLbl+'</span></td></tr>';
-  }).join('');
-}
-function renderBrokerChart(s){
-  const data=BROKER_DATA[s]||[];
-  const ctx=$('brokerChart')?$('brokerChart').getContext('2d'):null;
-  if(brokerChartInst)brokerChartInst.destroy();
-  brokerChartInst=safeNewChart(ctx,{type:'bar',data:{labels:data.map(function(b){return b.code;}),datasets:[{label:'Buy',data:data.map(function(b){return b.buy;}),backgroundColor:'rgba(0,214,143,.6)',borderColor:'#00D68F',borderWidth:1,borderRadius:3},{label:'Sell',data:data.map(function(b){return b.sell;}),backgroundColor:'rgba(255,77,106,.6)',borderColor:'#FF4D6A',borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8A91A8',font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}}}}});
-}
+  allMASignals = data;
 
-var bandarChartInst=null;
-function buildBandarPage(){
-  $('bandarAccPage').innerHTML=BANDAR_ACC.map(function(b){ return bandarRow(b,'grn'); }).join('');
-  $('bandarDistPage').innerHTML=BANDAR_DIST.map(function(b){ return bandarRow(b,'red'); }).join('');
-  const ctx=$('bandarChart')?$('bandarChart').getContext('2d'):null;
-  if(bandarChartInst)bandarChartInst.destroy();
-  bandarChartInst=safeNewChart(ctx,{type:'line',data:{labels:['Sen','Sel','Rab','Kam','Jum','Sen','Sel'],datasets:[{label:'Net Buy',data:[2.1,3.4,1.8,5.2,4.7,6.3,8.9],borderColor:'#00D68F',backgroundColor:'rgba(0,214,143,.08)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#00D68F'},{label:'Net Sell',data:[-0.8,-1.2,-0.5,-1.7,-2.1,-1.9,-2.3],borderColor:'#FF4D6A',backgroundColor:'rgba(255,77,106,.08)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#FF4D6A'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8A91A8',font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10},callback:function(v){return v+'B';}}}}}});
+  var buys = data.filter(function(s){return s.signal_type==='buy';});
+  var sells = data.filter(function(s){return s.signal_type==='sell';});
+  var watches = data.filter(function(s){return s.signal_type==='watch';});
+
+  // Update badges
+  document.getElementById('buyCount').textContent = buys.length + ' saham';
+  document.getElementById('sellCount').textContent = sells.length + ' saham';
+  document.getElementById('m-signals').textContent = buys.length + '/' + sells.length;
+  document.getElementById('m-signals-sub').innerHTML = '<span style="color:var(--grn)">'+buys.length+' Buy</span> / <span style="color:var(--red)">'+sells.length+' Sell</span>';
+
+  // MA page counts
+  var mb=document.getElementById('ma-buy-count'); if(mb)mb.textContent=buys.length;
+  var ms2=document.getElementById('ma-sell-count'); if(ms2)ms2.textContent=sells.length;
+  var mw=document.getElementById('ma-watch-count'); if(mw)mw.textContent=watches.length;
+  var mu=document.getElementById('ma-updated'); if(mu)mu.textContent=data[0]?formatTime(data[0].detected_at):'—';
+
+  // Nav badge
+  if(buys.length>0){
+    var mb2=document.getElementById('maBadge');
+    if(mb2){mb2.textContent=buys.length;mb2.style.display='';}
+  }
+
+  renderSignalList('buySignalList', buys.slice(0,3));
+  renderSignalList('sellSignalList', sells.slice(0,3));
+  renderMAView(currentMAView);
+
+  // Alerts dari sinyal baru
+  if(buys.length>0){
+    var gc=buys.filter(function(s){return s.ma_signal==='golden_cross';});
+    if(gc.length>0 && !activeAlerts.find(function(a){return a.title.includes('Golden Cross')&&a.title.includes(gc[0].stock_code);})){
+      activeAlerts.unshift({id:Date.now(),type:'buy',icon:'ti-trending-up',title:gc[0].stock_code+' — Golden Cross Terdeteksi!',desc:'MA10 memotong MA20 ke atas pada harga '+formatNum(gc[0].price)+'. Konfirmasi sinyal bullish kuat.',time:formatTime(gc[0].detected_at),read:false});
+      var nb=document.getElementById('alertNavBadge');
+      if(nb){nb.textContent=activeAlerts.filter(function(a){return !a.read;}).length;}
+    }
+  }
 }
 
-var foreignChartInst=null;
-function buildForeignPage(){
-  const mkTbl=function(data,col){
-    return '<table><thead><tr><th>Saham</th><th>Net Asing</th><th>% Vol</th></tr></thead><tbody>'+data.map(function(p,i){
-      const pcts=[18,14,11,8,6];
-      return '<tr><td><strong style="font-family:monospace">'+p[0]+'</strong></td><td><span style="font-family:monospace;font-weight:500;color:var(--'+col+')">'+p[1]+'</span></td><td style="color:var(--tx3)">'+pcts[i]+'%</td></tr>';
-    }).join('')+'</tbody></table>';
-  };
-  $('fBuyTable').innerHTML=mkTbl([['BBCA','+485M'],['BMRI','+312M'],['GOTO','+198M'],['BRIS','+145M'],['INDF','+92M']],'grn');
-  $('fSellTable').innerHTML=mkTbl([['TLKM','-421M'],['ASII','-387M'],['PGAS','-265M'],['UNVR','-192M'],['BBRI','-156M']],'red');
-  const ctx=$('foreignChart')?$('foreignChart').getContext('2d'):null;
-  if(foreignChartInst)foreignChartInst.destroy();
-  foreignChartInst=safeNewChart(ctx,{type:'bar',data:{labels:['15/5','16/5','19/5','20/5','21/5','22/5','23/5','26/5','27/5','28/5'],datasets:[{label:'Net Foreign',data:[320,-180,450,-247,180,390,-520,-120,280,-247],backgroundColor:function(c){return c.raw>=0?'rgba(0,214,143,.6)':'rgba(255,77,106,.6)';},borderColor:function(c){return c.raw>=0?'#00D68F':'#FF4D6A';},borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10},callback:function(v){return v+'M';}}}}}});
-}
+async function loadChartData(code){
+  document.getElementById('chartStock').textContent = code;
+  document.getElementById('chartSymbol').textContent = code;
 
-function buildMAPage(){
-  const allBuy=BUY_SIG.concat([{code:'BMRI',detail:'MA10 mendekati MA20',signal:'Watch',price:'6,875',chg:'+0.73%',t:'watch'},{code:'BRIS',detail:'Bounce MA50',signal:'Watch',price:'1,490',chg:'+1.36%',t:'watch'}]);
-  $('maBuyList').innerHTML=allBuy.map(signalRow).join('');
-  $('maSellList').innerHTML=SELL_SIG.map(signalRow).join('');
-}
+  var data = await sbFetch('stock_prices',
+    '?stock_code=eq.'+code+
+    '&select=close,open,high,low,volume,time' +
+    '&order=time.desc&limit=30'
+  );
 
-function buildScreenerPage(){
-  renderScreener(SCREENER_DATA);
-  document.querySelectorAll('.fp').forEach(function(fp){
-    fp.addEventListener('click', function(){
-      document.querySelectorAll('.fp').forEach(function(f){ f.classList.remove('a'); });
-      this.classList.add('a');
-      const f=this.dataset.f;
-      let d=SCREENER_DATA;
-      if(f==='buy')d=d.filter(function(s){return s.t==='buy';});
-      else if(f==='vol')d=d.filter(function(s){return parseFloat(s.vol)>60;});
-      else if(f==='bandar')d=d.filter(function(s){return ['Akumulasi','Breakout'].indexOf(s.setup)>=0;});
-      else if(f==='foreign')d=d.filter(function(s){return s.score>70;});
-      else if(f==='ma')d=d.filter(function(s){return s.setup==='Golden Cross'||s.signal.indexOf('Buy')>=0;});
-      renderScreener(d);
-    });
+  if(!data || !data.length){
+    document.getElementById('chartPrice').textContent = 'Belum ada data';
+    return;
+  }
+
+  data = data.reverse();
+  var latest = data[data.length-1];
+
+  document.getElementById('chartPrice').textContent = formatNum(latest.close);
+  document.getElementById('chartHLV').textContent = 'H:'+formatNum(latest.high)+' L:'+formatNum(latest.low)+' Vol:'+formatVol(latest.volume);
+
+  // Cari MA dari allMASignals
+  var sig = allMASignals.find(function(s){return s.stock_code===code;});
+  if(sig){
+    document.getElementById('leg-ma10').textContent = formatNum(sig.ma10);
+    document.getElementById('leg-ma20').textContent = formatNum(sig.ma20);
+    document.getElementById('leg-ma50').textContent = formatNum(sig.ma50);
+    var legSig=document.getElementById('leg-signal');
+    if(sig.ma_signal==='golden_cross'){legSig.textContent='● Golden Cross';legSig.style.color='var(--grn)';}
+    else if(sig.ma_signal==='death_cross'){legSig.textContent='● Death Cross';legSig.style.color='var(--red)';}
+    else{legSig.textContent='● Watch Zone';legSig.style.color='var(--gld)';}
+
+    // Update chart change badge
+    var chgEl=document.getElementById('chartChg');
+    if(sig.price>0){
+      var chgVal = ((latest.close - sig.ma20) / sig.ma20 * 100).toFixed(2);
+      chgEl.textContent = (chgVal>=0?'+':'')+chgVal+'% vs MA20';
+      chgEl.className = 'bdg '+(chgVal>=0?'buy':'sell');
+    }
+  }
+
+  var labels = data.map(function(d){return formatTime(d.time);});
+  var closes = data.map(function(d){return parseFloat(d.close);});
+
+  if(priceChart) priceChart.destroy();
+  var ctx = document.getElementById('priceChart');
+  if(!ctx) return;
+
+  priceChart = new Chart(ctx.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[
+        {label:code,data:closes,borderColor:'#00D68F',backgroundColor:'rgba(0,214,143,.08)',fill:true,tension:.3,pointRadius:0,borderWidth:2},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#161B29',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#8A91A8',bodyColor:'#E8EBF4',callbacks:{label:function(c){return 'Rp '+c.parsed.y.toLocaleString('id-ID');}}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:9},maxTicksLimit:6}},
+        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10},callback:function(v){return 'Rp '+v.toLocaleString('id-ID');}}}
+      }
+    }
   });
 }
-function renderScreener(data){
-  $('screenerBody').innerHTML=data.map(function(s){
-    const sc=s.score;
-    const scC=sc>79?'grn':sc>59?'blu':sc>39?'gld':'red';
-    const inWL=watchlist.indexOf(s.code)>=0;
-    return '<tr><td><strong style="font-family:monospace;font-size:13px">'+s.code+'</strong></td><td style="font-family:monospace">'+s.price+'</td><td style="color:var(--'+(s.u?'grn':'red')+');font-family:monospace;font-weight:500">'+s.chg+'</td><td style="color:var(--tx2)">'+s.vol+'</td><td style="min-width:90px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+sc+'%;height:100%;background:var(--'+scC+');border-radius:2px"></div></div><span style="font-family:monospace;font-size:11px;font-weight:500;color:var(--'+scC+');min-width:20px">'+sc+'</span></div></td><td><span class="bdg '+s.t+'">'+s.setup+'</span></td><td><span class="bdg '+s.t+'">'+s.signal+'</span></td><td><button onclick="toggleWL(\''+s.code+'\',this)" style="padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;background:'+(inWL?'var(--grnb)':'transparent')+';border:1px solid '+(inWL?'var(--grn)':'var(--br2)')+';color:'+(inWL?'var(--grn)':'var(--tx2)')+';font-family:inherit;white-space:nowrap">'+(inWL?'✓ Tersimpan':'+ Watchlist')+'</button></td></tr>';
+
+// ══════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════
+function renderTicker(prices){
+  var el=document.getElementById('tickerScroll');
+  el.innerHTML=prices.map(function(p){
+    return '<div class="tki" onclick="loadChartData(\''+p.stock_code+'\')"><span class="tki-sym" style="font-family:monospace;font-size:13px;font-weight:600">'+p.stock_code+'</span><span style="font-family:monospace;font-size:11px;color:var(--tx2)">'+formatNum(p.close)+'</span></div>';
+  }).join('');
+}
+
+function renderTickerDemo(){
+  var demos=['IHSG','BBCA','BBRI','TLKM','ASII','GOTO','BMRI','PGAS'];
+  document.getElementById('tickerScroll').innerHTML=demos.map(function(s){
+    return '<div class="tki"><span style="font-family:monospace;font-size:13px;font-weight:600">'+s+'</span><span style="font-size:11px;color:var(--tx3)">—</span></div>';
+  }).join('');
+}
+
+function renderLivePriceTable(prices){
+  var el=document.getElementById('livePriceTable');
+  el.innerHTML=prices.map(function(p){
+    return '<tr style="cursor:pointer" onclick="loadChartData(\''+p.stock_code+'\')">' +
+      '<td><strong style="font-family:monospace;color:var(--grn)">'+p.stock_code+'</strong></td>' +
+      '<td style="color:var(--tx2);font-size:11px">'+(STOCK_NAMES[p.stock_code]||'—')+'</td>' +
+      '<td><strong style="font-family:monospace">'+formatNum(p.close)+'</strong></td>' +
+      '<td style="font-family:monospace;color:var(--tx2)">'+formatNum(p.open)+'</td>' +
+      '<td style="font-family:monospace;color:var(--grn)">'+formatNum(p.high)+'</td>' +
+      '<td style="font-family:monospace;color:var(--red)">'+formatNum(p.low)+'</td>' +
+      '<td style="color:var(--tx2)">'+formatVol(p.volume)+'</td>' +
+      '<td style="color:var(--tx3);font-size:10px">'+formatTime(p.time)+'</td>' +
+      '</tr>';
+  }).join('');
+  document.getElementById('priceUpdateTime').textContent='Update: '+new Date().toLocaleTimeString('id-ID')+' · Delay ~15 menit';
+}
+
+function updateMetrics(prices){
+  var ihsg=prices.find(function(p){return p.stock_code==='IHSG';});
+  if(ihsg){
+    document.getElementById('m-ihsg').textContent=formatNum(ihsg.close);
+    document.getElementById('m-ihsg-chg').textContent='Close: '+formatNum(ihsg.close);
+  } else {
+    document.getElementById('m-ihsg').textContent=prices.length+' saham';
+    document.getElementById('m-ihsg-chg').textContent='Data tersedia di database';
+  }
+
+  var now=new Date();
+  document.getElementById('m-lastupdate').textContent=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('m-foreign').textContent='Mode Demo';
+}
+
+function renderSignalList(elId, signals){
+  var el=document.getElementById(elId);
+  if(!signals.length){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--tx3)">Tidak ada sinyal</div>';return;}
+  el.innerHTML=signals.map(function(s){
+    var col=s.signal_type==='buy'?'grn':s.signal_type==='sell'?'red':'gld';
+    var lbl={golden_cross:'Golden Cross',death_cross:'Death Cross',watch_zone:'Watch Zone',bounce_ma:'Bounce MA'}[s.ma_signal]||s.ma_signal;
+    return '<div class="sli"><div style="flex:1"><div style="font-family:monospace;font-size:13px;font-weight:600">'+s.stock_code+'</div><div style="font-size:10px;color:var(--tx3)">'+(STOCK_NAMES[s.stock_code]||'')+' · '+formatTime(s.detected_at)+'</div></div><span class="bdg '+s.signal_type+'">'+lbl+'</span><div style="text-align:right;min-width:52px"><div style="font-family:monospace;font-size:12px;font-weight:500">'+formatNum(s.price)+'</div><div style="font-size:10px;color:var(--tx3)">MA10:'+formatNum(s.ma10)+'</div></div></div>';
+  }).join('');
+}
+
+function switchMAView(mode,btn){
+  document.querySelectorAll('#btBuy,#btSell,#btWatch').forEach(function(b){b.classList.remove('a');});
+  btn.classList.add('a');
+  currentMAView=mode;
+  renderMAView(mode);
+}
+
+function renderMAView(mode){
+  var filtered=allMASignals.filter(function(s){return s.signal_type===mode;});
+  renderSignalList('maSignalList',filtered);
+}
+
+// ══════════════════════════════════════════
+// MA FULL PAGE
+// ══════════════════════════════════════════
+function buildMAFull(){
+  var buys=allMASignals.filter(function(s){return s.signal_type==='buy';});
+  var sells=allMASignals.filter(function(s){return s.signal_type==='sell';});
+  renderSignalList('maBuyFull',buys);
+  renderSignalList('maSellFull',sells);
+}
+
+// ══════════════════════════════════════════
+// SCREENER FROM MA DATA
+// ══════════════════════════════════════════
+var screenerFilter='all';
+function filterScreener(el){
+  document.querySelectorAll('.fp').forEach(function(f){f.classList.remove('a');});
+  el.classList.add('a');
+  screenerFilter=el.dataset.f;
+  buildScreenerFromMA();
+}
+function buildScreenerFromMA(){
+  var data=allMASignals;
+  if(screenerFilter!=='all') data=data.filter(function(s){return s.signal_type===screenerFilter;});
+
+  // Merge dengan price data
+  data=data.map(function(s){
+    var p=allPrices.find(function(pr){return pr.stock_code===s.stock_code;});
+    return Object.assign({},s,{volume:p?p.volume:0,high:p?p.high:0,low:p?p.low:0});
+  });
+
+  var el=document.getElementById('screenerBody');
+  if(!data.length){el.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:20px">Tidak ada data untuk filter ini</td></tr>';return;}
+
+  el.innerHTML=data.map(function(s){
+    var lbl={golden_cross:'Golden Cross',death_cross:'Death Cross',watch_zone:'Watch Zone',bounce_ma:'Bounce MA'}[s.ma_signal]||s.ma_signal;
+    var inWL=watchlist.indexOf(s.stock_code)>=0;
+    return '<tr><td><strong style="font-family:monospace;font-size:13px">'+s.stock_code+'</strong></td>' +
+      '<td style="font-family:monospace">'+formatNum(s.price)+'</td>' +
+      '<td style="color:var(--tx2)">'+formatVol(s.volume)+'</td>' +
+      '<td style="color:var(--tx2)">'+formatVol(s.volume)+'</td>' +
+      '<td style="font-family:monospace;color:var(--gld)">'+formatNum(s.ma10)+'</td>' +
+      '<td style="font-family:monospace;color:var(--blu)">'+formatNum(s.ma20)+'</td>' +
+      '<td><span class="bdg '+s.signal_type+'">'+lbl+'</span></td>' +
+      '<td><button onclick="toggleWL(\''+s.stock_code+'\',this)" style="padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;background:'+(inWL?'var(--grnb)':'transparent')+';border:1px solid '+(inWL?'var(--grn)':'var(--br2)')+';color:'+(inWL?'var(--grn)':'var(--tx2)')+';font-family:inherit">'+(inWL?'✓ Disimpan':'+ Watchlist')+'</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// SWING FROM MA DATA
+// ══════════════════════════════════════════
+function buildSwingFromMA(){
+  var buys=allMASignals.filter(function(s){return s.signal_type==='buy'&&s.ma10&&s.ma20;});
+  document.getElementById('swingCount').textContent=buys.length;
+  document.getElementById('swingCards').innerHTML=buys.slice(0,6).map(function(s){
+    var entry=(s.ma20*0.99).toFixed(0);
+    var tp=(s.price*1.08).toFixed(0);
+    var sl=(s.ma20*0.97).toFixed(0);
+    return '<div class="panel" style="padding:14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-family:monospace;font-weight:700;font-size:16px">'+s.stock_code+'</span><span class="bdg buy">Long Setup</span></div>' +
+      '<div style="font-size:11px;display:flex;flex-direction:column;gap:4px;margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between"><span style="color:var(--tx3)">Harga Saat Ini</span><span style="font-family:monospace;font-weight:500">'+formatNum(s.price)+'</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><span style="color:var(--tx3)">Entry Zone</span><span style="font-family:monospace;font-weight:500">'+formatNum(entry)+'–'+formatNum(s.price)+'</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><span style="color:var(--grn)">Target +8%</span><span style="font-family:monospace;font-weight:500;color:var(--grn)">'+formatNum(tp)+'</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><span style="color:var(--red)">Stop Loss</span><span style="font-family:monospace;font-weight:500;color:var(--red)">'+formatNum(sl)+'</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><span style="color:var(--tx3)">MA Signal</span><span style="font-family:monospace;color:var(--gld)">'+(s.ma_signal==='golden_cross'?'Golden Cross':'Bounce MA')+'</span></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// BROKER (DEMO)
+// ══════════════════════════════════════════
+var BROKER_DATA={
+  BBCA:[{code:'YU',name:'BNI Sekuritas',buy:24.5,sell:9.2,ab:9620,as2:9580,st:'acc'},{code:'AK',name:'UBS Securities',buy:19.8,sell:6.1,ab:9640,as2:9610,st:'acc'},{code:'RX',name:'Mandiri Sekuritas',buy:15.2,sell:13.8,ab:9635,as2:9630,st:'neu'},{code:'DH',name:'BCA Sekuritas',buy:6.4,sell:21.3,ab:9655,as2:9645,st:'dist'}],
+};
+function buildBrokerPage(){
+  var data=BROKER_DATA['BBCA'];
+  var maxV=Math.max.apply(null,data.map(function(d){return Math.max(d.buy,d.sell);}));
+  document.getElementById('brokerTbody').innerHTML=data.map(function(b){
+    var net=b.buy-b.sell;
+    var nc=net>2?'grn':net<-2?'red':'gld';
+    var stLbl=b.st==='acc'?'Akumulasi':b.st==='dist'?'Distribusi':'Netral';
+    var stT=b.st==='acc'?'buy':b.st==='dist'?'sell':'neu';
+    var bw=function(v){return Math.round((v/maxV)*58);};
+    return '<tr><td><span style="font-family:monospace;font-weight:600;color:var(--blu)">'+b.code+'</span></td><td style="color:var(--tx2)">'+b.name+'</td><td><div class="bar-w"><div class="bar-t"><div style="width:'+bw(b.buy)+'%;height:100%;background:var(--grn);opacity:.75"></div></div><span style="font-family:monospace;font-size:11px;color:var(--grn)">'+b.buy+'M</span></div></td><td><div class="bar-w"><div class="bar-t"><div style="width:'+bw(b.sell)+'%;height:100%;background:var(--red);opacity:.75"></div></div><span style="font-family:monospace;font-size:11px;color:var(--red)">'+b.sell+'M</span></div></td><td><span style="font-family:monospace;font-weight:500;color:var(--'+nc+')">'+(net>0?'+':'')+net.toFixed(1)+'M</span></td><td style="font-family:monospace;font-size:11px;color:var(--tx2)">'+b.ab.toLocaleString()+'</td><td style="font-family:monospace;font-size:11px;color:var(--tx2)">'+b.as2.toLocaleString()+'</td><td><span class="bdg '+stT+'">'+stLbl+'</span></td></tr>';
+  }).join('');
+  var ctx=document.getElementById('brokerChart');
+  if(ctx){
+    if(brokerChartInst)brokerChartInst.destroy();
+    brokerChartInst=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:data.map(function(b){return b.code;}),datasets:[{label:'Buy',data:data.map(function(b){return b.buy;}),backgroundColor:'rgba(0,214,143,.6)',borderRadius:3},{label:'Sell',data:data.map(function(b){return b.sell;}),backgroundColor:'rgba(255,77,106,.6)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8A91A8',font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555E78',font:{size:10}}}}}});
+  }
+}
+
+// ══════════════════════════════════════════
+// BANDAR (DEMO)
+// ══════════════════════════════════════════
+var BANDAR_ACC=[{rank:1,code:'BBCA',sec:'Perbankan',pct:87,net:'+5.2B',days:'3 hari'},{rank:2,code:'GOTO',sec:'Teknologi',pct:79,net:'+3.8B',days:'5 hari'},{rank:3,code:'BMRI',sec:'Perbankan',pct:68,net:'+1.8B',days:'4 hari'}];
+var BANDAR_DIST=[{rank:1,code:'PGAS',sec:'Energi',pct:65,net:'-1.7B',days:'4 hari'},{rank:2,code:'ASII',sec:'Otomotif',pct:58,net:'-2.3B',days:'3 hari'}];
+function buildBandarPage(){
+  var mkRow=function(b,col){return '<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--br)"><div style="font-family:monospace;font-size:11px;color:var(--tx3);width:14px">'+b.rank+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+b.code+'</div><div style="font-size:10px;color:var(--tx3)">'+b.sec+'</div></div><div style="flex:1.4"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:10px;color:var(--tx3)">'+(col==='grn'?'Akumulasi':'Distribusi')+'</span><span style="font-size:10px;color:var(--'+col+')">'+b.pct+'%</span></div><div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+b.pct+'%;height:100%;background:var(--'+col+');border-radius:2px"></div></div></div><div style="text-align:right;min-width:52px"><div style="font-family:monospace;font-size:12px;font-weight:500;color:var(--'+col+')">'+b.net+'</div><div style="font-size:10px;color:var(--tx3)">'+b.days+'</div></div></div>';};
+  document.getElementById('bandarAccPage').innerHTML=BANDAR_ACC.map(function(b){return mkRow(b,'grn');}).join('');
+  document.getElementById('bandarDistPage').innerHTML=BANDAR_DIST.map(function(b){return mkRow(b,'red');}).join('');
+}
+
+// ══════════════════════════════════════════
+// ALERTS
+// ══════════════════════════════════════════
+function buildAlertsPage(){
+  var unread=activeAlerts.filter(function(a){return !a.read;}).length;
+  var ab=document.getElementById('alertBadge');
+  if(ab){ab.textContent=unread>0?(unread+' Baru'):'Semua Baca';ab.className='bdg '+(unread>0?'sell':'buy');}
+  var nb=document.getElementById('alertNavBadge');
+  if(nb){nb.textContent=unread||'';nb.style.display=unread?'':'none';}
+  var icMap={buy:['ti-trending-up','var(--grnb)','var(--grn)'],sell:['ti-world','var(--redb)','var(--red)'],warn:['ti-eye','var(--gldb)','var(--gld)'],info:['ti-database','var(--blub)','var(--blu)']};
+  document.getElementById('alertList').innerHTML=activeAlerts.map(function(a){
+    var m=icMap[a.type]||icMap.info;
+    return '<div class="ali" onclick="readAlert('+a.id+')" style="opacity:'+(a.read?.75:1)+'"><div class="aic" style="background:'+m[1]+';color:'+m[2]+'"><i class="ti '+a.icon+'"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:'+(a.read?400:600)+';margin-bottom:2px">'+(!a.read?'<span style="width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle"></span>':'')+a.title+'</div><div style="font-size:11px;color:var(--tx3);line-height:1.5">'+a.desc+'</div></div><div style="font-size:10px;color:var(--tx3);font-family:monospace;white-space:nowrap">'+a.time+'</div></div>';
+  }).join('');
+}
+function readAlert(id){
+  var a=activeAlerts.find(function(x){return x.id===id;});
+  if(a)a.read=true;
+  buildAlertsPage();
+}
+function markAllAlerts(){activeAlerts.forEach(function(a){a.read=true;});buildAlertsPage();}
+
+// ══════════════════════════════════════════
+// WATCHLIST
+// ══════════════════════════════════════════
+function buildWLPage(){
+  var data=allMASignals.filter(function(s){return watchlist.indexOf(s.stock_code)>=0;});
+  var el=document.getElementById('wlBody');
+  if(!data.length){
+    el.innerHTML='<div style="padding:28px;text-align:center;color:var(--tx3)">Belum ada saham. Tambahkan dari AI Screener.</div>';
+    return;
+  }
+  el.innerHTML=data.map(function(s){
+    var p=allPrices.find(function(pr){return pr.stock_code===s.stock_code;});
+    var lbl={golden_cross:'Golden Cross',death_cross:'Death Cross',watch_zone:'Watch Zone',bounce_ma:'Bounce MA'}[s.ma_signal]||s.ma_signal;
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--br)"><div><div style="font-family:monospace;font-weight:700;font-size:15px">'+s.stock_code+'</div><div style="font-size:10px;color:var(--tx3)">'+(STOCK_NAMES[s.stock_code]||'IDX')+'</div></div><div style="flex:1;padding:0 14px"><div style="background:var(--bg3);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--tx3)">MA10: <strong style="color:var(--gld)">'+formatNum(s.ma10)+'</strong> · MA20: <strong style="color:var(--blu)">'+formatNum(s.ma20)+'</strong></div></div><div style="text-align:right"><div style="font-family:monospace;font-size:15px;font-weight:600">'+formatNum(s.price)+'</div><div style="font-size:12px;color:var(--tx3)">'+(p?'Vol:'+formatVol(p.volume):'—')+'</div></div><span class="bdg '+s.signal_type+'" style="margin:0 6px">'+lbl+'</span><button onclick="removeWL(\''+s.stock_code+'\')" style="width:28px;height:28px;border-radius:6px;background:var(--redb);border:1px solid rgba(255,77,106,.2);color:var(--red);cursor:pointer;font-size:16px;flex-shrink:0">×</button></div>';
   }).join('');
 }
 function toggleWL(code,btn){
-  watchlist = watchlist.indexOf(code)>=0 ? watchlist.filter(function(c){return c!==code;}) : watchlist.concat([code]);
-  const inWL=watchlist.indexOf(code)>=0;
+  watchlist=watchlist.indexOf(code)>=0?watchlist.filter(function(c){return c!==code;}):[...watchlist,code];
+  var inWL=watchlist.indexOf(code)>=0;
   btn.style.background=inWL?'var(--grnb)':'transparent';
   btn.style.borderColor=inWL?'var(--grn)':'var(--br2)';
   btn.style.color=inWL?'var(--grn)':'var(--tx2)';
-  btn.textContent=inWL?'✓ Tersimpan':'+ Watchlist';
+  btn.textContent=inWL?'✓ Disimpan':'+ Watchlist';
 }
+function removeWL(code){watchlist=watchlist.filter(function(c){return c!==code;});buildWLPage();}
 
-function buildSwingPage(){
-  $('swingCards').innerHTML=SWING_DATA.map(function(s){
-    const c=s.t==='buy'?'grn':'red';
-    return '<div class="panel" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-family:monospace;font-weight:700;font-size:16px">'+s.code+'</span><span class="bdg '+(s.t==='buy'?'buy':'sell')+'">'+(s.t==='buy'?'Long Setup':'Short Setup')+'</span></div><div style="font-size:11px;display:flex;flex-direction:column;gap:4px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span style="color:var(--tx3)">Entry Zone</span><span style="font-family:monospace;font-weight:500">'+s.entry+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--grn)">Take Profit</span><span style="font-family:monospace;font-weight:500;color:var(--grn)">'+s.tp+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--red)">Stop Loss</span><span style="font-family:monospace;font-weight:500;color:var(--red)">'+s.sl+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--tx3)">R:R Ratio</span><span style="font-family:monospace;font-weight:500;color:var(--gld)">1:'+s.rr+'</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--tx3)">Holding</span><span style="font-family:monospace">'+s.days+'</span></div></div><div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:'+s.score+'%;height:100%;background:var(--'+c+')"></div></div><div style="display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--tx3)"><span>AI Score</span><span style="color:var(--'+c+');font-weight:500">'+s.score+'/100</span></div></div>';
-  }).join('');
-}
-
-function buildAlertsPage(){
-  const unread=activeAlerts.filter(function(a){return !a.read;}).length;
-  $('alertBadge').textContent=unread>0?(unread+' Baru'):'Semua Baca';
-  $('alertBadge').className='bdg '+(unread>0?'sell':'buy');
-  $('alertNavBadge').textContent=unread||'';
-  $('alertNavBadge').style.display=unread?'':'none';
-  const icMap={buy:['ti-trending-up','var(--grnb)','var(--grn)'],sell:['ti-world','var(--redb)','var(--red)'],warn:['ti-eye','var(--gldb)','var(--gld)'],info:['ti-robot','var(--blub)','var(--blu)']};
-  $('alertList').innerHTML=activeAlerts.map(function(a){
-    const m=icMap[a.type]||icMap.info;
-    return '<div class="ali" onclick="readAlert('+a.id+')" style="opacity:'+(a.read?.75:1)+'"><div class="aic" style="background:'+m[1]+';color:'+m[2]+'"><i class="ti '+m[0]+'"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:'+(a.read?400:600)+';margin-bottom:2px">'+(!a.read?'<span style="width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle"></span>':'')+a.title+'</div><div style="font-size:11px;color:var(--tx3);line-height:1.5">'+a.desc+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:10px;color:var(--tx3);font-family:monospace">'+a.time+'</div>'+(!a.read?'<div style="font-size:10px;color:var(--blu);margin-top:3px">Tandai baca</div>':'')+'</div></div>';
-  }).join('');
-}
-function readAlert(id){ activeAlerts[id].read=true; buildAlertsPage(); renderDashAlerts(); }
-function markAllAlerts(){ activeAlerts.forEach(function(a){a.read=true;}); buildAlertsPage(); renderDashAlerts(); }
-
-function buildWLPage(){
-  const data=SCREENER_DATA.filter(function(s){ return watchlist.indexOf(s.code)>=0; });
-  $('wlBody').innerHTML = data.length===0
-    ? '<div style="padding:28px;text-align:center;color:var(--tx3);font-size:13px">Belum ada saham. Tambahkan dari halaman AI Screener.</div>'
-    : data.map(function(s){
-      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--br)"><div><div style="font-family:monospace;font-weight:700;font-size:15px">'+s.code+'</div><div style="font-size:10px;color:var(--tx3)">IDX · Regular</div></div><div style="flex:1;padding:0 14px"><div style="background:var(--bg3);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--tx3)">AI Score: <strong style="color:'+(s.score>79?'var(--grn)':s.score>59?'var(--blu)':'var(--gld)')+'">'+s.score+'</strong> &nbsp;|&nbsp; '+s.setup+'</div></div><div style="text-align:right"><div style="font-family:monospace;font-size:15px;font-weight:600">'+s.price+'</div><div style="font-size:12px;color:var(--'+(s.u?'grn':'red')+')">'+s.chg+'</div></div><span class="bdg '+s.t+'" style="margin:0 6px">'+s.signal+'</span><button onclick="removeWL(\''+s.code+'\')" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:var(--redb);border:1px solid rgba(255,77,106,.2);color:var(--red);cursor:pointer;font-size:16px;flex-shrink:0">×</button></div>';
-    }).join('');
-}
-function removeWL(code){ watchlist=watchlist.filter(function(c){return c!==code;}); buildWLPage(); }
-
-const TG_SETTINGS=[{label:'Golden Cross / Death Cross',key:'tg_gc',val:true},{label:'Bandar Akumulasi Alert',key:'tg_bandar',val:true},{label:'Sinyal MA10/MA20',key:'tg_ma',val:false},{label:'Foreign Flow Alert',key:'tg_ff',val:true},{label:'AI Screener Update',key:'tg_ai',val:false}];
-const TR_SETTINGS=[{label:'Mode Dark',key:'tr_dark',val:true},{label:'Auto Refresh 30 detik',key:'tr_refresh',val:true},{label:'Suara Notifikasi',key:'tr_sound',val:false},{label:'Volume Chart Otomatis',key:'tr_vol',val:true}];
-TG_SETTINGS.forEach(function(s){ settingState[s.key]=s.val; });
-TR_SETTINGS.forEach(function(s){ settingState[s.key]=s.val; });
+// ══════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════
+var TG_SETTINGS=[{label:'Golden Cross / Death Cross',key:'tg_gc'},{label:'Bandar Akumulasi Alert',key:'tg_bandar'},{label:'Sinyal MA10/MA20',key:'tg_ma'},{label:'Foreign Flow Alert',key:'tg_ff'}];
+var TR_SETTINGS=[{label:'Mode Dark',key:'tr_dark'},{label:'Auto Refresh 30 detik',key:'tr_refresh'},{label:'Suara Notifikasi',key:'tr_sound'},{label:'Volume Chart',key:'tr_vol'}];
 function buildSettingsPage(){
-  const mkRows=function(items,elId){
-    $(elId).innerHTML=items.map(function(s){
+  var mkRows=function(items,elId){
+    document.getElementById(elId).innerHTML=items.map(function(s){
       return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--br)"><span style="font-size:13px">'+s.label+'</span><button class="sw" id="sw-'+s.key+'" onclick="toggleSetting(\''+s.key+'\')" style="background:'+(settingState[s.key]?'var(--grn)':'var(--bg4)')+'"><div class="sw-th" style="left:'+(settingState[s.key]?21:3)+'px"></div></button></div>';
     }).join('');
   };
   mkRows(TG_SETTINGS,'telegramSettings');
   mkRows(TR_SETTINGS,'tradingSettings');
-  const plans=[
-    {name:'Basic',price:'Gratis',feats:['5 watchlist','MA signals','Dashboard basic'],cur:false},
-    {name:'Premium',price:'Rp 99K/bln',feats:['Unlimited watchlist','AI Screener','Telegram alerts','Broker analysis','Bandar tracker','Foreign flow analytics'],cur:true},
-    {name:'Pro',price:'Rp 199K/bln',feats:['Semua Premium+','API access','Custom screener','White-label','Priority support'],cur:false},
-  ];
-  $('planCards').innerHTML=plans.map(function(p){
-    return '<div style="border:'+(p.cur?'1px solid var(--grn)':'1px solid var(--br)')+';border-radius:11px;padding:16px;background:'+(p.cur?'var(--grnb)':'transparent')+'"><div style="font-weight:700;font-size:15px;margin-bottom:4px;color:'+(p.cur?'var(--grn)':'var(--tx)')+'">'+p.name+'</div><div style="font-family:monospace;font-size:18px;font-weight:600;margin-bottom:12px">'+p.price+'</div>'+p.feats.map(function(f){ return '<div style="font-size:12px;color:var(--tx2);margin-bottom:5px;display:flex;gap:5px"><span style="color:'+(p.cur?'var(--grn)':'var(--tx3)')+'">✓</span>'+f+'</div>'; }).join('')+(p.cur?'<div style="margin-top:12px;font-size:12px;color:var(--grn);font-weight:600">✦ Paket Aktif Sekarang</div>':'<button class="btn" style="width:100%;justify-content:center;margin-top:12px;font-size:12px">Upgrade →</button>')+'</div>';
-  }).join('');
 }
 function toggleSetting(key){
   settingState[key]=!settingState[key];
-  const sw=$('sw-'+key);
-  if(sw){ sw.style.background=settingState[key]?'var(--grn)':'var(--bg4)'; sw.querySelector('.sw-th').style.left=settingState[key]?'21px':'3px'; }
+  var sw=document.getElementById('sw-'+key);
+  if(sw){sw.style.background=settingState[key]?'var(--grn)':'var(--bg4)';sw.querySelector('.sw-th').style.left=settingState[key]?'21px':'3px';}
 }
+
+// ══════════════════════════════════════════
+// REFRESH
+// ══════════════════════════════════════════
+function refreshAllData(){
+  var ic=document.getElementById('refreshIcon');
+  if(ic){ic.classList.add('spin');}
+  loadAllData().then(function(){
+    if(ic){ic.classList.remove('spin');}
+  });
+}
+
+function setTF(btn,tf){
+  document.querySelectorAll('#p-dash .tbtn').forEach(function(b){b.classList.remove('a');});
+  btn.classList.add('a');
+  currentTF=tf;
+  var code=document.getElementById('chartSymbol').textContent||'BBCA';
+  loadChartData(code);
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function formatNum(n){
+  if(!n&&n!==0)return '—';
+  return parseFloat(n).toLocaleString('id-ID',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function formatVol(v){
+  if(!v)return '—';
+  if(v>=1000000000)return (v/1000000000).toFixed(1)+'B';
+  if(v>=1000000)return (v/1000000).toFixed(1)+'M';
+  if(v>=1000)return (v/1000).toFixed(1)+'K';
+  return v;
+}
+function formatTime(t){
+  if(!t)return '—';
+  try{
+    var d=new Date(t);
+    if(isNaN(d.getTime()))return t.split('T')[0]||t;
+    return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){return t;}
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+try{ buildAlertsPage(); }catch(e){}
 try{ buildSettingsPage(); }catch(e){}
+loadAllData();
+
+// Auto-refresh setiap 5 menit
+setInterval(loadAllData, 5*60*1000);
 </script>
 </body>
 </html>
