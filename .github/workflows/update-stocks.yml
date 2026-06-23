@@ -1,0 +1,37 @@
+name: Update IDX Stock Data
+
+on:
+  schedule:
+    # Jalan setiap 15 menit, Senin-Jumat jam 08:45-16:15 WIB (01:45-09:15 UTC)
+    - cron: '*/15 1-9 * * 1-5'
+  workflow_dispatch: # Bisa dijalankan manual dari GitHub
+
+jobs:
+  update-stocks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install yfinance supabase requests
+
+      - name: Fetch & update stock data
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python scripts/update_stocks.py
+
+      - name: Calculate MA signals
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python scripts/calculate_ma.py
