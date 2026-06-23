@@ -2,9 +2,8 @@ name: Update IDX Stock Data
 
 on:
   schedule:
-    # Jalan setiap 15 menit, Senin-Jumat jam 08:45-16:15 WIB (01:45-09:15 UTC)
     - cron: '*/15 1-9 * * 1-5'
-  workflow_dispatch: # Bisa dijalankan manual dari GitHub
+  workflow_dispatch:
 
 jobs:
   update-stocks:
@@ -19,10 +18,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
-        run: pip install yfinance supabase requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance supabase requests
 
       - name: Fetch & update stock data
         env:
